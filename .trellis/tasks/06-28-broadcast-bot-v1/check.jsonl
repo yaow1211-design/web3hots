@@ -1,0 +1,6 @@
+{"file":".trellis/workflow.md","reason":"Review Trellis TDD and finish requirements"}
+{"file":".trellis/spec/backend/index.md","reason":"Review backend quality expectations"}
+{"file":".trellis/spec/guides/index.md","reason":"Review cross-layer/code-reuse risk checklist"}
+{"file":".trellis/tasks/06-28-broadcast-bot-v1/prd.md","reason":"Review requirements and acceptance criteria"}
+{"file":".trellis/tasks/06-28-broadcast-bot-v1/design.md","reason":"Review architecture and interface contracts"}
+{"file":".trellis/tasks/06-28-broadcast-bot-v1/implement.md","reason":"Review task order and TDD evidence requirements"}

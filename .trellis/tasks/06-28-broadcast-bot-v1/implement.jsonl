@@ -1,0 +1,6 @@
+{"file":".trellis/workflow.md","reason":"Trellis TDD workflow and task lifecycle rules"}
+{"file":".trellis/spec/backend/index.md","reason":"Backend/CLI development guidelines entry point"}
+{"file":".trellis/spec/guides/index.md","reason":"Cross-layer and code reuse thinking guide entry point"}
+{"file":".trellis/tasks/06-28-broadcast-bot-v1/prd.md","reason":"Task requirements and acceptance criteria"}
+{"file":".trellis/tasks/06-28-broadcast-bot-v1/design.md","reason":"Technical design and interface contracts"}
+{"file":".trellis/tasks/06-28-broadcast-bot-v1/implement.md","reason":"Task order and TDD execution rules"}
