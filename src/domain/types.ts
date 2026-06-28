@@ -112,6 +112,7 @@ export interface FeishuDmResult {
 export interface CorePack {
   runId: string;
   date: string;
+  status?: "ok" | "degraded" | "failed";
   window: string;
   sourceHealth: Array<{ source: string; ok: boolean; itemCount: number; error?: string }>;
   selectedEvents: ScoredEvent[];

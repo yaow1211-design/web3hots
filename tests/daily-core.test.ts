@@ -174,6 +174,68 @@ describe("runDailyCore", () => {
     expect(savedJson.feishuWriteResult).toMatchObject({ ok: true, docToken: "material_doc" });
     expect(savedJson.dmResult).toMatchObject({ ok: false, error: "DM unavailable" });
   });
+
+  it("sends a degraded DM when the material document write fails", async () => {
+    const root = await mkdtemp(join(tmpdir(), "daily-core-doc-failed-"));
+    await mkdir(join(root, "config"));
+    await writeFile(join(root, ".env"), "FEISHU_APP_ID=cli_test\nFEISHU_APP_SECRET=secret_test\n");
+    await writeFile(
+      join(root, "config", "default.json"),
+      JSON.stringify({
+        timezone: "Asia/Shanghai",
+        defaultWindowHours: 24,
+        outputDir: "custom-runs",
+        logFile: "logs/broadcast-bot.log",
+        selection: { min: 1, target: 3 },
+        sources: [{ id: "cointelegraph", type: "rss", url: "https://cointelegraph.com/rss", enabled: true, credibility: 0.82 }],
+        marketApis: [{ id: "coingecko", enabled: true, timeoutMs: 5000 }],
+        themeWeights: { regulation: 1.2, infrastructure: 1.1, security: 1.2, marketStructure: 1, aiCrypto: 1.1 }
+      })
+    );
+    await writeFile(
+      join(root, "config", "mia.json"),
+      JSON.stringify({
+        materialDocToken: "material_doc",
+        xiaohongshuDocToken: "xhs_doc",
+        xDocToken: "x_doc",
+        feishuOpenId: "ou_test",
+        priorityThemes: ["regulation"],
+        styleConstraints: ["signal over noise"],
+        riskReminders: ["do not imply investment advice"]
+      })
+    );
+
+    let dmText = "";
+
+    const pack = await runDailyCore({
+      rootDir: root,
+      now: new Date("2026-06-27T16:30:00.000Z"),
+      fetchSources: async () => ({
+        items: sourceItems,
+        health: [{ source: "fixture", ok: true, itemCount: sourceItems.length }]
+      }),
+      fetchMarket: async () => ({
+        trendSummary: "Market API unavailable; package keeps only verifiable news context.",
+        sources: [],
+        degraded: true,
+        degradationReason: "fixture",
+        fetchedAt: "2026-06-27T16:30:00.000Z"
+      }),
+      feishuClient: {
+        appendMarkdown: async () => ({ ok: false, docToken: "material_doc", error: "doc failed" }),
+        sendText: async (_openId, text) => {
+          dmText = text;
+          return { ok: true, messageId: "msg_123" };
+        }
+      }
+    });
+
+    expect(pack.feishuWriteResult).toMatchObject({ ok: false, docToken: "material_doc", error: "doc failed" });
+    expect(dmText).toContain("degraded");
+    expect(dmText).toContain("doc failed");
+    expect(dmText).not.toContain("package ready");
+    expect(dmText).not.toContain("Doc: material_doc");
+  });
 });
 
 async function fileExists(path: string): Promise<boolean> {

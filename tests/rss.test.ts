@@ -101,4 +101,49 @@ describe("fetchFixedSources", () => {
       { source: "cointelegraph", ok: true, itemCount: 2 }
     ]);
   });
+
+  it("aborts stalled response bodies on timeout, records the failure, and continues to later sources", async () => {
+    vi.useFakeTimers();
+    const xml = await readFile(join(process.cwd(), "tests", "fixtures", "cointelegraph-rss.xml"), "utf8");
+    const signalStates: Array<{ source: string; hasSignal: boolean }> = [];
+    const fetchImpl = (url: string | URL | Request, init?: RequestInit) => {
+      if (String(url).includes("stalled-body")) {
+        signalStates.push({ source: "stalled-body", hasSignal: Boolean(init?.signal) });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () => new Promise<string>((_, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              reject(new Error("stalled body aborted"));
+            }, { once: true });
+          })
+        } as Response);
+      }
+
+      signalStates.push({ source: "cointelegraph", hasSignal: Boolean(init?.signal) });
+      return Promise.resolve(new Response(xml, { status: 200 }));
+    };
+
+    const resultPromise = fetchFixedSources({
+      sources: [
+        { ...source, id: "stalled-body", url: "https://stalled-body.example/rss" },
+        source
+      ],
+      now: new Date("2026-06-28T02:00:00.000Z"),
+      fetchImpl
+    });
+
+    await vi.advanceTimersByTimeAsync(DEFAULT_SOURCE_FETCH_TIMEOUT_MS);
+    const result = await resultPromise;
+
+    expect(signalStates).toEqual([
+      { source: "stalled-body", hasSignal: true },
+      { source: "cointelegraph", hasSignal: true }
+    ]);
+    expect(result.items).toHaveLength(2);
+    expect(result.health).toEqual([
+      { source: "stalled-body", ok: false, itemCount: 0, error: `Source stalled-body timed out after ${DEFAULT_SOURCE_FETCH_TIMEOUT_MS}ms` },
+      { source: "cointelegraph", ok: true, itemCount: 2 }
+    ]);
+  });
 });

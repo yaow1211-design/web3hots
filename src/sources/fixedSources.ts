@@ -26,10 +26,18 @@ export async function fetchFixedSources(params: {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), DEFAULT_SOURCE_FETCH_TIMEOUT_MS);
-      let response: Response;
-
       try {
-        response = await fetchImpl(source.url, { signal: controller.signal });
+        const response = await fetchImpl(source.url, { signal: controller.signal });
+
+        if (!response.ok) {
+          health.push({ source: source.id, ok: false, itemCount: 0, error: `HTTP ${response.status}` });
+          continue;
+        }
+
+        const xml = await response.text();
+        const parsedItems = parseRssItems({ xml, source, fetchedAt });
+        items.push(...parsedItems);
+        health.push({ source: source.id, ok: true, itemCount: parsedItems.length });
       } catch (error) {
         if (controller.signal.aborted) {
           throw new Error(`Source ${source.id} timed out after ${DEFAULT_SOURCE_FETCH_TIMEOUT_MS}ms`);
@@ -38,16 +46,6 @@ export async function fetchFixedSources(params: {
       } finally {
         clearTimeout(timeoutId);
       }
-
-      if (!response.ok) {
-        health.push({ source: source.id, ok: false, itemCount: 0, error: `HTTP ${response.status}` });
-        continue;
-      }
-
-      const xml = await response.text();
-      const parsedItems = parseRssItems({ xml, source, fetchedAt });
-      items.push(...parsedItems);
-      health.push({ source: source.id, ok: true, itemCount: parsedItems.length });
     } catch (error) {
       health.push({
         source: source.id,

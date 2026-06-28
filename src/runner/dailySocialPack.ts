@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
 import { join } from "node:path";
-import type { SocialPack } from "../domain/types.js";
+import type { CorePack, FeishuWriteResult, SocialPack } from "../domain/types.js";
 import type { FeishuClient } from "../feishu/client.js";
 import { loadConfig } from "../config/loadConfig.js";
 import { createFeishuClient } from "../feishu/client.js";
@@ -27,14 +27,50 @@ function dateKey(now: Date, timezone: string): string {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-function formatDmText(params: { date: string; selectedCount: number; xiaohongshuTarget: string; xTarget: string }): string {
+function failedWriteLine(label: string, result: FeishuWriteResult): string {
+  return result.ok
+    ? `${label} doc: ${result.url ?? result.docToken}`
+    : `${label} doc delivery failed: ${result.error ?? "unknown error"}`;
+}
+
+function formatDmText(params: {
+  date: string;
+  selectedCount: number;
+  xiaohongshuResult: FeishuWriteResult;
+  xResult: FeishuWriteResult;
+}): string {
+  const writesOk = params.xiaohongshuResult.ok && params.xResult.ok;
+
   return [
-    `Web3 social creation package ready: ${params.date}`,
+    writesOk
+      ? `Web3 social creation package ready: ${params.date}`
+      : `Web3 social creation package degraded: ${params.date}`,
     `Selected topics: ${params.selectedCount}`,
-    `Xiaohongshu doc: ${params.xiaohongshuTarget}`,
-    `X doc: ${params.xTarget}`,
+    failedWriteLine("Xiaohongshu", params.xiaohongshuResult),
+    failedWriteLine("X", params.xResult),
     "These are creation prompts, not final publishable posts."
   ].join("\n");
+}
+
+function skippedDeliveryReason(corePack: CorePack): string | null {
+  const errors = [
+    corePack.feishuWriteResult?.error,
+    corePack.dmResult?.error
+  ].filter((error): error is string => Boolean(error));
+
+  return errors.find((error) =>
+    error.includes("Feishu delivery skipped") ||
+    error.includes("below selection.min") ||
+    error.includes("selection.min")
+  ) ?? null;
+}
+
+function coreReadinessFailure(corePack: CorePack): string | null {
+  if (corePack.status === "failed") {
+    return corePack.feishuWriteResult?.error ?? corePack.dmResult?.error ?? "core package status is failed";
+  }
+
+  return skippedDeliveryReason(corePack);
 }
 
 export async function runDailySocialPack(params: RunDailySocialPackParams = {}): Promise<SocialPack> {
@@ -55,6 +91,12 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
     }
 
     const corePack = await readCorePack(paths.coreJson);
+    const readinessFailure = coreReadinessFailure(corePack);
+
+    if (readinessFailure) {
+      throw new Error(`Core package for ${date} is not ready for social delivery: ${readinessFailure}`);
+    }
+
     let pack = buildSocialPack({
       runId: `social-${date}-${now.getTime()}`,
       date,
@@ -86,8 +128,8 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
       formatDmText({
         date,
         selectedCount: pack.selectedTopics.length,
-        xiaohongshuTarget: xiaohongshuResult.url ?? config.mia.xiaohongshuDocToken,
-        xTarget: xResult.url ?? config.mia.xDocToken
+        xiaohongshuResult,
+        xResult
       })
     );
 

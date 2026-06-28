@@ -87,6 +87,74 @@ describe("runDailySocialPack", () => {
     expect(sendTextCalls).toBe(0);
   });
 
+  it("fails clearly when the saved core pack failed readiness and never calls Feishu", async () => {
+    const root = await mkdtemp(join(tmpdir(), "daily-social-core-failed-"));
+    await writeConfig(root);
+    const coreJson = join(root, "custom-runs", "2026-06-28", "core.json");
+
+    await writeJsonFile(coreJson, {
+      runId: "core-2026-06-28",
+      date: "2026-06-28",
+      status: "failed",
+      window: "24h",
+      sourceHealth: [],
+      selectedEvents: [{
+        id: "event1",
+        title: "SEC issues new stablecoin custody guidance",
+        canonicalUrl: "https://example.com/sec",
+        sources: [{ source: "cointelegraph", url: "https://example.com/sec", publishedAt: "2026-06-28T00:30:00.000Z" }],
+        publishedAt: "2026-06-28T00:30:00.000Z",
+        summary: "The guidance changes reserve disclosure expectations.",
+        theme: "regulation",
+        isDuplicate: false,
+        initialReason: "within window",
+        credibilityScore: 0.82,
+        timelinessScore: 1,
+        impactScore: 0.9,
+        miaAngleScore: 0.8,
+        contentPotentialScore: 0.85,
+        totalScore: 5.244,
+        selectionReason: "selected for structural impact"
+      }],
+      marketSnapshot: { trendSummary: "degraded", sources: [], degraded: true, fetchedAt: "2026-06-28T02:00:00.000Z" },
+      generationPrompt: "prompt",
+      markdownPath: join(root, "custom-runs", "2026-06-28", "core.md"),
+      jsonPath: coreJson,
+      feishuWriteResult: {
+        ok: false,
+        docToken: "material_doc",
+        error: "Feishu delivery skipped: selected events 1 below selection.min 2."
+      },
+      dmResult: {
+        ok: false,
+        error: "Feishu delivery skipped: selected events 1 below selection.min 2."
+      }
+    });
+
+    let appendMarkdownCalls = 0;
+    let sendTextCalls = 0;
+
+    await expect(runDailySocialPack({
+      rootDir: root,
+      now: new Date("2026-06-27T16:30:00.000Z"),
+      feishuClient: {
+        appendMarkdown: async () => {
+          appendMarkdownCalls += 1;
+          return { ok: true, docToken: "x" };
+        },
+        sendText: async () => {
+          sendTextCalls += 1;
+          return { ok: true };
+        }
+      }
+    })).rejects.toThrow(
+      "Core package for 2026-06-28 is not ready for social delivery: Feishu delivery skipped: selected events 1 below selection.min 2."
+    );
+
+    expect(appendMarkdownCalls).toBe(0);
+    expect(sendTextCalls).toBe(0);
+  });
+
   it("builds from saved core pack, saves local outputs before Feishu delivery, and rewrites JSON with delivery results", async () => {
     const root = await mkdtemp(join(tmpdir(), "daily-social-"));
     await writeConfig(root);
@@ -163,6 +231,66 @@ describe("runDailySocialPack", () => {
       { ok: true, docToken: "x_doc", url: "https://applink.feishu.cn/docx/x_doc" }
     ]);
     expect(savedJson.dmResult).toMatchObject({ ok: false, error: "DM unavailable" });
+  });
+
+  it("sends a degraded DM when social document writes fail", async () => {
+    const root = await mkdtemp(join(tmpdir(), "daily-social-doc-failed-"));
+    await writeConfig(root);
+    const coreJson = join(root, "custom-runs", "2026-06-28", "core.json");
+
+    await writeJsonFile(coreJson, {
+      runId: "core-2026-06-28",
+      date: "2026-06-28",
+      status: "ok",
+      window: "24h",
+      sourceHealth: [],
+      selectedEvents: [{
+        id: "event1",
+        title: "SEC issues new stablecoin custody guidance",
+        canonicalUrl: "https://example.com/sec",
+        sources: [{ source: "cointelegraph", url: "https://example.com/sec", publishedAt: "2026-06-28T00:30:00.000Z" }],
+        publishedAt: "2026-06-28T00:30:00.000Z",
+        summary: "The guidance changes reserve disclosure expectations.",
+        theme: "regulation",
+        isDuplicate: false,
+        initialReason: "within window",
+        credibilityScore: 0.82,
+        timelinessScore: 1,
+        impactScore: 0.9,
+        miaAngleScore: 0.8,
+        contentPotentialScore: 0.85,
+        totalScore: 5.244,
+        selectionReason: "selected for structural impact"
+      }],
+      marketSnapshot: { trendSummary: "degraded", sources: [], degraded: true, fetchedAt: "2026-06-28T02:00:00.000Z" },
+      generationPrompt: "prompt",
+      markdownPath: join(root, "custom-runs", "2026-06-28", "core.md"),
+      jsonPath: coreJson
+    });
+
+    let dmText = "";
+
+    const pack = await runDailySocialPack({
+      rootDir: root,
+      now: new Date("2026-06-27T16:30:00.000Z"),
+      feishuClient: {
+        appendMarkdown: async (docToken) => ({ ok: false, docToken, error: "doc failed" }),
+        sendText: async (_openId, text) => {
+          dmText = text;
+          return { ok: true, messageId: "msg_123" };
+        }
+      }
+    });
+
+    expect(pack.feishuWriteResults).toEqual([
+      { ok: false, docToken: "xhs_doc", error: "doc failed" },
+      { ok: false, docToken: "x_doc", error: "doc failed" }
+    ]);
+    expect(dmText).toContain("degraded");
+    expect(dmText).toContain("doc failed");
+    expect(dmText).not.toContain("package ready");
+    expect(dmText).not.toContain("Xiaohongshu doc: xhs_doc");
+    expect(dmText).not.toContain("X doc: x_doc");
   });
 });
 

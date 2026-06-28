@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { CorePack, MarketApiConfig, MarketSnapshot, SourceItem } from "../domain/types.js";
+import type { CorePack, FeishuWriteResult, MarketApiConfig, MarketSnapshot, SourceItem } from "../domain/types.js";
 import type { FeishuClient } from "../feishu/client.js";
 import { loadConfig } from "../config/loadConfig.js";
 import { createFeishuClient } from "../feishu/client.js";
@@ -38,11 +38,22 @@ function dateKey(now: Date, timezone: string): string {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-function formatDmText(params: { date: string; selectedCount: number; docTarget: string; marketSnapshot: MarketSnapshot }): string {
+function formatDmText(params: {
+  date: string;
+  selectedCount: number;
+  feishuWriteResult: FeishuWriteResult;
+  marketSnapshot: MarketSnapshot;
+}): string {
+  const docStatus = params.feishuWriteResult.ok
+    ? `Doc: ${params.feishuWriteResult.url ?? params.feishuWriteResult.docToken}`
+    : `Doc delivery failed: ${params.feishuWriteResult.error ?? "unknown error"}`;
+
   return [
-    `Web3 core material package ready: ${params.date}`,
+    params.feishuWriteResult.ok
+      ? `Web3 core material package ready: ${params.date}`
+      : `Web3 core material package degraded: ${params.date}`,
     `Selected events: ${params.selectedCount}`,
-    `Doc: ${params.docTarget}`,
+    docStatus,
     params.marketSnapshot.degraded
       ? `Market module degraded: ${params.marketSnapshot.degradationReason ?? "unknown"}`
       : "Market module available"
@@ -89,6 +100,7 @@ export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<Cor
 
     pack = {
       ...pack,
+      status: "failed",
       feishuWriteResult: {
         ok: false,
         docToken: config.mia.materialDocToken,
@@ -123,12 +135,17 @@ export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<Cor
     formatDmText({
       date,
       selectedCount: selectedEvents.length,
-      docTarget: feishuWriteResult.url ?? config.mia.materialDocToken,
+      feishuWriteResult,
       marketSnapshot
     })
   );
 
-  pack = { ...pack, feishuWriteResult, dmResult };
+  pack = {
+    ...pack,
+    status: feishuWriteResult.ok && dmResult.ok ? "ok" : "degraded",
+    feishuWriteResult,
+    dmResult
+  };
   await writeJsonFile(paths.coreJson, pack);
   await appendLog(logPath, `daily-core finished status=${feishuWriteResult.ok && dmResult.ok ? "ok" : "degraded"}`);
 
