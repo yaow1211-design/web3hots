@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+config/mia.json
+runs/
+logs/
+coverage/
+.DS_Store

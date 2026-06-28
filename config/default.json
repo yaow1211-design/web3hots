@@ -1,0 +1,22 @@
+{
+  "timezone": "Asia/Shanghai",
+  "defaultWindowHours": 24,
+  "outputDir": "runs",
+  "logFile": "logs/broadcast-bot.log",
+  "selection": { "min": 1, "target": 5 },
+  "sources": [
+    { "id": "cointelegraph", "type": "rss", "url": "https://cointelegraph.com/rss", "enabled": true, "credibility": 0.82 },
+    { "id": "decrypt", "type": "rss", "url": "https://decrypt.co/feed", "enabled": true, "credibility": 0.8 },
+    { "id": "coindesk", "type": "rss", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/", "enabled": true, "credibility": 0.86 }
+  ],
+  "marketApis": [
+    { "id": "coingecko", "enabled": true, "timeoutMs": 5000 }
+  ],
+  "themeWeights": {
+    "regulation": 1.2,
+    "infrastructure": 1.1,
+    "security": 1.2,
+    "marketStructure": 1,
+    "aiCrypto": 1.1
+  }
+}
