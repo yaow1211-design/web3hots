@@ -95,4 +95,63 @@ describe("filtering pipeline", () => {
 
     expect(scored[0].rejectionReason).toBeUndefined();
   });
+
+  it("does not reject a structural item that mentions price words without prediction language", () => {
+    const structuralPriceEvent = [
+      {
+        id: "cointelegraph:price-structure",
+        source: "cointelegraph",
+        sourceType: "rss" as const,
+        title: "SEC targets stablecoin price disclosure this week",
+        canonicalUrl: "https://cointelegraph.com/news/sec-targets-stablecoin-price-disclosure",
+        sources: [{ source: "cointelegraph", url: "https://cointelegraph.com/news/sec-targets-stablecoin-price-disclosure", publishedAt: "2026-06-28T00:30:00.000Z" }],
+        publishedAt: "2026-06-28T00:30:00.000Z",
+        summary: "The regulator targets disclosure rules for stablecoin price reporting this week.",
+        theme: "regulation" as const,
+        isDuplicate: false,
+        initialReason: "within configured time window"
+      }
+    ];
+
+    const scored = scoreCandidates(structuralPriceEvent, config);
+
+    expect(scored[0].rejectionReason).toBeUndefined();
+  });
+
+  it("does not mutate the input candidate sources when deduping", () => {
+    const input = normalizeSourceItems([
+      {
+        id: "cointelegraph:dedupe-a",
+        source: "cointelegraph",
+        sourceType: "rss" as const,
+        title: "SEC issues new stablecoin custody guidance",
+        url: "https://cointelegraph.com/news/sec-stablecoin-custody-guidance-a",
+        publishedAt: "2026-06-28T00:30:00.000Z",
+        summary: "The guidance changes how custodians report reserve and redemption risk.",
+        rawText: "SEC stablecoin custody reserve redemption risk",
+        fetchedAt: "2026-06-28T02:00:00.000Z"
+      },
+      {
+        id: "decrypt:dedupe-b",
+        source: "decrypt",
+        sourceType: "rss" as const,
+        title: "New stablecoin custody guidance lands from SEC",
+        url: "https://decrypt.co/sec-stablecoin-custody-guidance-b",
+        publishedAt: "2026-06-28T00:45:00.000Z",
+        summary: "The regulator updated expectations for stablecoin custody disclosures.",
+        rawText: "SEC regulator stablecoin custody disclosures reserve",
+        fetchedAt: "2026-06-28T02:00:00.000Z"
+      }
+    ], new Date("2026-06-28T02:00:00.000Z"), 24);
+
+    const originalSources = input.map((candidate) => candidate.sources);
+    const deduped = dedupeCandidates(input);
+
+    expect(deduped).toHaveLength(1);
+    expect(deduped[0].sources).toHaveLength(2);
+    expect(input[0].sources).toBe(originalSources[0]);
+    expect(input[1].sources).toBe(originalSources[1]);
+    expect(input[0].sources).toHaveLength(1);
+    expect(input[1].sources).toHaveLength(1);
+  });
 });

@@ -29,11 +29,11 @@ export function dedupeCandidates(candidates: CandidateEvent[]): CandidateEvent[]
     );
 
     if (!existing) {
-      result.push({ ...candidate });
+      result.push({ ...candidate, sources: candidate.sources.map((source) => ({ ...source })) });
       continue;
     }
 
-    existing.sources.push(...candidate.sources);
+    existing.sources.push(...candidate.sources.map((source) => ({ ...source })));
 
     if (new Date(candidate.publishedAt).getTime() > new Date(existing.publishedAt).getTime()) {
       existing.publishedAt = candidate.publishedAt;

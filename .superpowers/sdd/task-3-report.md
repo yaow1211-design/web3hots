@@ -140,3 +140,54 @@ Result:
 
 - `tests/filtering.test.ts` passed after removing timing-only rejection.
 - TypeScript typecheck passed with no errors.
+
+# Fix Report: Tighten Filtering Edge Cases
+
+Date: 2026-06-28
+
+## Scope
+
+Fixed two edge cases in the filtering pipeline:
+
+- price-prediction rejection now requires prediction semantics instead of raw keyword presence
+- dedupe now copies nested `sources` arrays before storing or merging
+
+Changed files:
+
+- `src/filtering/score.ts`
+- `src/filtering/dedupe.ts`
+- `tests/filtering.test.ts`
+
+## RED Evidence
+
+Command:
+
+```bash
+npm test -- tests/filtering.test.ts
+```
+
+Result:
+
+- Failed on the new structural price-word regression assertion.
+- Failed on the new dedupe aliasing regression assertion.
+
+Failure messages:
+
+```text
+expected 'low-signal price prediction' to be undefined
+expected [ …(2) ] to have a length of 1 but got 2
+```
+
+## GREEN Evidence
+
+Commands:
+
+```bash
+npm test -- tests/filtering.test.ts
+npm run typecheck
+```
+
+Result:
+
+- `tests/filtering.test.ts` passed with all five filtering assertions green.
+- TypeScript typecheck passed with no errors.

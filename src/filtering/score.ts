@@ -1,7 +1,22 @@
 import type { CandidateEvent, DefaultConfig, ScoredEvent } from "../domain/types.js";
 
 function hasPricePrediction(event: CandidateEvent): boolean {
-  return /(price|target|analyst|trader|may reach)/i.test(`${event.title} ${event.summary}`);
+  const text = `${event.title} ${event.summary}`;
+  const lower = text.toLowerCase();
+
+  if (/\b(may|might|could)\s+(reach|hit)\b/.test(lower)) {
+    return true;
+  }
+
+  if (/\bprice\s+target\b|\btarget\s+price\b/.test(lower)) {
+    return true;
+  }
+
+  if (/\b(analyst|trader)\b/.test(lower) && /\b(price|target|reach|hit)\b/.test(lower)) {
+    return true;
+  }
+
+  return false;
 }
 
 function impactScore(event: CandidateEvent): number {
