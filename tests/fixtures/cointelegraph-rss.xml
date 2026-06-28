@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Cointelegraph</title>
+    <item>
+      <title>Ethereum validators adopt new client diversity policy</title>
+      <link>https://cointelegraph.com/news/ethereum-client-diversity-policy</link>
+      <guid>eth-client-diversity</guid>
+      <pubDate>Sun, 28 Jun 2026 00:30:00 GMT</pubDate>
+      <description><![CDATA[Validator operators are shifting client choices after a foundation update.]]></description>
+    </item>
+    <item>
+      <title>Bitcoin price may hit a new target, analyst says</title>
+      <link>https://cointelegraph.com/news/bitcoin-price-target</link>
+      <guid>btc-price-target</guid>
+      <pubDate>Sun, 28 Jun 2026 01:00:00 GMT</pubDate>
+      <description>Analysts discuss a price target.</description>
+    </item>
+  </channel>
+</rss>
