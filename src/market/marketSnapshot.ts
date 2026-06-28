@@ -37,10 +37,14 @@ export async function fetchMarketSnapshot(params: {
       }
 
       const data = (await response.json()) as CoinGeckoResponse;
+      if (typeof data.bitcoin?.usd !== "number" || typeof data.ethereum?.usd !== "number") {
+        errors.push(`${api.id} failed: missing required BTC or ETH USD`);
+        continue;
+      }
 
       return {
-        btcUsd: data.bitcoin?.usd,
-        ethUsd: data.ethereum?.usd,
+        btcUsd: data.bitcoin.usd,
+        ethUsd: data.ethereum.usd,
         btcChange24h: data.bitcoin?.usd_24h_change,
         ethChange24h: data.ethereum?.usd_24h_change,
         trendSummary: `BTC ${formatChange(data.bitcoin?.usd_24h_change)}, ETH ${formatChange(data.ethereum?.usd_24h_change)} over 24h.`,

@@ -23,7 +23,8 @@ describe("fetchMarketSnapshot", () => {
       ethUsd: 3400,
       btcChange24h: 1.25,
       ethChange24h: -0.8,
-      degraded: false
+      degraded: false,
+      fetchedAt: "2026-06-28T02:00:00.000Z"
     });
   });
 
@@ -39,5 +40,28 @@ describe("fetchMarketSnapshot", () => {
     expect(result.degraded).toBe(true);
     expect(result.trendSummary).toBe("Market API unavailable; package keeps only verifiable news context.");
     expect(result.degradationReason).toBe("coingecko failed: HTTP 502");
+    expect(result.fetchedAt).toBe("2026-06-28T02:00:00.000Z");
+  });
+
+  it("returns degraded snapshot when CoinGecko response omits required USD data", async () => {
+    const fetchImpl = async () =>
+      new Response(
+        JSON.stringify({
+          bitcoin: { usd: 61000, usd_24h_change: 1.25 },
+          ethereum: { usd_24h_change: -0.8 }
+        }),
+        { status: 200 }
+      );
+
+    const result = await fetchMarketSnapshot({
+      apis: [{ id: "coingecko", enabled: true, timeoutMs: 5000 }],
+      now: new Date("2026-06-28T02:00:00.000Z"),
+      fetchImpl
+    });
+
+    expect(result.degraded).toBe(true);
+    expect(result.trendSummary).toBe("Market API unavailable; package keeps only verifiable news context.");
+    expect(result.degradationReason).toBe("coingecko failed: missing required BTC or ETH USD");
+    expect(result.fetchedAt).toBe("2026-06-28T02:00:00.000Z");
   });
 });
