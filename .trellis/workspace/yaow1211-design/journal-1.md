@@ -38,3 +38,37 @@ Implemented independent Node/TypeScript broadcast bot CLI for daily-core and dai
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: Reserve Supabase storage config
+
+**Date**: 2026-06-28
+**Task**: Reserve Supabase storage config
+**Branch**: `feat/broadcast-bot-v1`
+
+### Summary
+
+Added optional Supabase storage reservation config while preserving local-only defaults; validated schema/types/env placeholders/docs and recorded the storage contract in Trellis specs.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ce5a3e2` | (see git log) |
+| `cb38444` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
