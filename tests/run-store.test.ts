@@ -20,6 +20,17 @@ describe("run store", () => {
     expect(await readFile(join(root, "logs", "broadcast-bot.log"), "utf8")).toContain("core complete");
   });
 
+  it("derives run paths under a custom output directory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "broadcast-store-custom-"));
+    const paths = getRunPaths(root, "2026-06-28", "custom-runs");
+
+    expect(paths.runDir).toBe(join(root, "custom-runs", "2026-06-28"));
+    expect(paths.coreJson).toBe(join(root, "custom-runs", "2026-06-28", "core.json"));
+    expect(paths.coreMarkdown).toBe(join(root, "custom-runs", "2026-06-28", "core.md"));
+    expect(paths.socialJson).toBe(join(root, "custom-runs", "2026-06-28", "social-pack.json"));
+    expect(paths.socialMarkdown).toBe(join(root, "custom-runs", "2026-06-28", "social-pack.md"));
+  });
+
   it("reads a saved core pack", async () => {
     const root = await mkdtemp(join(tmpdir(), "broadcast-core-read-"));
     const paths = getRunPaths(root, "2026-06-28");

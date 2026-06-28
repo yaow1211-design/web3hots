@@ -22,8 +22,16 @@ export interface RunDailyCoreParams {
   feishuClient?: FeishuClient;
 }
 
-function dateKey(now: Date): string {
-  return now.toISOString().slice(0, 10);
+function dateKey(now: Date, timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(now);
+  const part = (type: "year" | "month" | "day") => parts.find((item) => item.type === type)?.value;
+
+  return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
 function formatDmText(params: { date: string; selectedCount: number; docTarget: string; marketSnapshot: MarketSnapshot }): string {
@@ -41,8 +49,8 @@ export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<Cor
   const rootDir = params.rootDir ?? process.cwd();
   const now = params.now ?? new Date();
   const config = await loadConfig({ rootDir });
-  const date = dateKey(now);
-  const paths = getRunPaths(rootDir, date);
+  const date = dateKey(now, config.defaultConfig.timezone);
+  const paths = getRunPaths(rootDir, date, config.defaultConfig.outputDir);
   const logPath = join(rootDir, config.defaultConfig.logFile);
 
   await appendLog(logPath, `daily-core started runDate=${date}`);

@@ -15,7 +15,7 @@ describe("runDailyCore", () => {
       JSON.stringify({
         timezone: "Asia/Shanghai",
         defaultWindowHours: 24,
-        outputDir: "runs",
+        outputDir: "custom-runs",
         logFile: "logs/broadcast-bot.log",
         selection: { min: 1, target: 3 },
         sources: [{ id: "cointelegraph", type: "rss", url: "https://cointelegraph.com/rss", enabled: true, credibility: 0.82 }],
@@ -40,7 +40,7 @@ describe("runDailyCore", () => {
 
     const pack = await runDailyCore({
       rootDir: root,
-      now: new Date("2026-06-28T02:00:00.000Z"),
+      now: new Date("2026-06-27T16:30:00.000Z"),
       fetchSources: async () => ({
         items: sourceItems,
         health: [{ source: "fixture", ok: true, itemCount: sourceItems.length }]
@@ -50,22 +50,22 @@ describe("runDailyCore", () => {
         sources: [],
         degraded: true,
         degradationReason: "fixture",
-        fetchedAt: "2026-06-28T02:00:00.000Z"
+        fetchedAt: "2026-06-27T16:30:00.000Z"
       }),
       feishuClient: {
         appendMarkdown: async () => {
           deliveryChecks.push({
             step: "appendMarkdown",
-            markdownExists: await fileExists(join(root, "runs", "2026-06-28", "core.md")),
-            jsonExists: await fileExists(join(root, "runs", "2026-06-28", "core.json"))
+            markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.md")),
+            jsonExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.json"))
           });
           return { ok: true, docToken: "material_doc", url: "https://applink.feishu.cn/docx/material_doc" };
         },
         sendText: async () => {
           deliveryChecks.push({
             step: "sendText",
-            markdownExists: await fileExists(join(root, "runs", "2026-06-28", "core.md")),
-            jsonExists: await fileExists(join(root, "runs", "2026-06-28", "core.json"))
+            markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.md")),
+            jsonExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.json"))
           });
           return { ok: false, error: "DM unavailable" };
         }
@@ -79,8 +79,11 @@ describe("runDailyCore", () => {
       { step: "appendMarkdown", markdownExists: true, jsonExists: true },
       { step: "sendText", markdownExists: true, jsonExists: true }
     ]);
-    expect(await readFile(join(root, "runs", "2026-06-28", "core.md"), "utf8")).toContain("Web3 Core Material Pack");
-    expect(JSON.parse(await readFile(join(root, "runs", "2026-06-28", "core.json"), "utf8")).runId).toContain("core-2026-06-28");
+    expect(await readFile(join(root, "custom-runs", "2026-06-28", "core.md"), "utf8")).toContain("Web3 Core Material Pack");
+    const savedJson = JSON.parse(await readFile(join(root, "custom-runs", "2026-06-28", "core.json"), "utf8"));
+    expect(savedJson.runId).toContain("core-2026-06-28");
+    expect(savedJson.feishuWriteResult).toMatchObject({ ok: true, docToken: "material_doc" });
+    expect(savedJson.dmResult).toMatchObject({ ok: false, error: "DM unavailable" });
   });
 });
 

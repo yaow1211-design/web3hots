@@ -8,8 +8,8 @@ export interface RunPaths {
   socialMarkdown: string;
 }
 
-export function getRunPaths(rootDir: string, date: string): RunPaths {
-  const runDir = join(rootDir, "runs", date);
+export function getRunPaths(rootDir: string, date: string, outputDir = "runs"): RunPaths {
+  const runDir = join(rootDir, outputDir, date);
   return {
     runDir,
     coreJson: join(runDir, "core.json"),
