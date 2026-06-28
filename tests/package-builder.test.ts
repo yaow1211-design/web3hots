@@ -1,7 +1,48 @@
 import { describe, expect, it } from "vitest";
+import type { MiaConfig, ScoredEvent, SourceItem, Theme } from "../src/domain/types.js";
 import { buildCorePack, renderCorePackMarkdown } from "../src/package-builder/corePack.js";
 import { buildSocialPack, renderSocialPackMarkdown } from "../src/package-builder/socialPack.js";
-import { event, mia } from "./fixtures/core-pack.js";
+import { sourceItems } from "./fixtures/core-pack.js";
+
+const mia: MiaConfig = {
+  materialDocToken: "material_doc",
+  xiaohongshuDocToken: "xhs_doc",
+  xDocToken: "x_doc",
+  feishuOpenId: "ou_test",
+  priorityThemes: ["regulation", "infrastructure"],
+  styleConstraints: ["signal over noise"],
+  riskReminders: ["do not imply investment advice"]
+};
+
+function scoredEvent(
+  item: SourceItem,
+  overrides: { theme: Theme; contentPotentialScore: number; title?: string }
+): ScoredEvent {
+  return {
+    id: item.id,
+    title: overrides.title ?? item.title,
+    canonicalUrl: item.url,
+    sources: [{ source: item.source, url: item.url, publishedAt: item.publishedAt }],
+    publishedAt: item.publishedAt,
+    summary: item.summary,
+    theme: overrides.theme,
+    isDuplicate: false,
+    initialReason: "within configured time window",
+    credibilityScore: 0.82,
+    timelinessScore: 1,
+    impactScore: 0.9,
+    miaAngleScore: 0.8,
+    contentPotentialScore: overrides.contentPotentialScore,
+    totalScore: 5.244,
+    selectionReason: "selected for structural impact (0.9) and Mia angle (0.8)"
+  };
+}
+
+const event = scoredEvent(sourceItems[0], {
+  theme: "regulation",
+  contentPotentialScore: 0.85,
+  title: "SEC issues new stablecoin custody guidance"
+});
 
 describe("package builders", () => {
   it("builds a core material package markdown with facts, Mia angle, and prompt", () => {
@@ -34,12 +75,27 @@ describe("package builders", () => {
     expect(pack.generationPrompt).toContain("Create a concise Web3 brief");
   });
 
-  it("builds a social prompt package from the core package", () => {
+  it("selects the top two social topics by content potential and creates topic fact boundaries", () => {
+    const lowPotential = scoredEvent(sourceItems[1], {
+      theme: "regulation",
+      contentPotentialScore: 0.45,
+      title: "Lower-potential custody update"
+    });
+    const highPotential = scoredEvent(sourceItems[2], {
+      theme: "marketStructure",
+      contentPotentialScore: 0.95,
+      title: "Highest-potential market structure update"
+    });
+    const mediumPotential = scoredEvent(sourceItems[3], {
+      theme: "security",
+      contentPotentialScore: 0.7,
+      title: "Second-potential security report"
+    });
     const core = buildCorePack({
       runId: "core-2026-06-28",
       date: "2026-06-28",
       window: "24h",
-      selectedEvents: [event],
+      selectedEvents: [lowPotential, highPotential, mediumPotential],
       sourceHealth: [],
       marketSnapshot: { trendSummary: "degraded", sources: [], degraded: true, degradationReason: "API unavailable", fetchedAt: "2026-06-28T02:00:00.000Z" },
       paths: { markdownPath: "runs/2026-06-28/core.md", jsonPath: "runs/2026-06-28/core.json" },
@@ -55,10 +111,21 @@ describe("package builders", () => {
 
     const markdown = renderSocialPackMarkdown(social);
 
-    expect(social.selectedTopics).toHaveLength(1);
+    expect(social.selectedTopics).toHaveLength(2);
+    expect(social.selectedTopics.map((topic) => topic.title)).toEqual([
+      "Highest-potential market structure update",
+      "Second-potential security report"
+    ]);
+    expect(social.factBoundaries).toEqual([
+      'Only claim what sources support for "Highest-potential market structure update".',
+      'Only claim what sources support for "Second-potential security report".'
+    ]);
     expect(social.xiaohongshuPrompt).toContain("小红书");
     expect(social.chineseXPrompt).toContain("中文 X thread");
     expect(social.englishXPrompt).toContain("English X thread");
+    expect(social.xiaohongshuPrompt).toContain("Do not produce final publishable copy.");
+    expect(social.chineseXPrompt).toContain("Do not produce final publishable copy.");
+    expect(social.englishXPrompt).toContain("Do not produce final publishable copy.");
     expect(markdown).toContain("not final publishable copy");
   });
 });

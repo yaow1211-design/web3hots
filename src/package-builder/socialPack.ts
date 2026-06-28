@@ -10,12 +10,8 @@ export interface BuildSocialPackParams {
 }
 
 export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
-  const selectedTopics = params.corePack.selectedEvents;
-  const factBoundaries = [
-    "Stick to facts already present in the core package.",
-    "Do not add new claims, forecasts, or missing context.",
-    "Keep the output clearly marked as draft social guidance."
-  ];
+  const selectedTopics = [...params.corePack.selectedEvents].sort((a, b) => b.contentPotentialScore - a.contentPotentialScore).slice(0, 2);
+  const factBoundaries = selectedTopics.map((topic) => `Only claim what sources support for "${topic.title}".`);
 
   return {
     runId: params.runId,
