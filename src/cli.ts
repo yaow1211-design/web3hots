@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 import { runDailyCore } from "./runner/dailyCore.js";
+import { runDailySocialPack } from "./runner/dailySocialPack.js";
 
 export async function main(argv: string[]): Promise<number> {
   const command = argv[2];
 
   if (command === "daily-core") {
     await runDailyCore();
+    return 0;
+  }
+
+  if (command === "daily-social-pack") {
+    await runDailySocialPack();
     return 0;
   }
 
