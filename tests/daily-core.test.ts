@@ -129,6 +129,8 @@ describe("runDailyCore", () => {
     );
 
     const deliveryChecks: Array<{ step: "appendMarkdown" | "sendText"; markdownExists: boolean; jsonExists: boolean }> = [];
+    let appendedMarkdown = "";
+    const dmTexts: string[] = [];
 
     const pack = await runDailyCore({
       rootDir: root,
@@ -145,7 +147,8 @@ describe("runDailyCore", () => {
         fetchedAt: "2026-06-27T16:30:00.000Z"
       }),
       feishuClient: {
-        appendMarkdown: async () => {
+        appendMarkdown: async (_docToken, markdown) => {
+          appendedMarkdown = markdown;
           deliveryChecks.push({
             step: "appendMarkdown",
             markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.md")),
@@ -153,7 +156,8 @@ describe("runDailyCore", () => {
           });
           return { ok: true, docToken: "material_doc", url: "https://my.feishu.cn/docx/material_doc" };
         },
-        sendText: async () => {
+        sendText: async (_openId, text) => {
+          dmTexts.push(text);
           deliveryChecks.push({
             step: "sendText",
             markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.md")),
@@ -169,8 +173,14 @@ describe("runDailyCore", () => {
     expect(pack.dmResult?.ok).toBe(false);
     expect(deliveryChecks).toEqual([
       { step: "appendMarkdown", markdownExists: true, jsonExists: true },
+      { step: "sendText", markdownExists: true, jsonExists: true },
       { step: "sendText", markdownExists: true, jsonExists: true }
     ]);
+    expect(appendedMarkdown).not.toContain("Generation prompt");
+    expect(appendedMarkdown).not.toContain("Create a concise Web3 brief");
+    expect(dmTexts[0]).toContain("Web3 core material package");
+    expect(dmTexts[1]).toContain("OpenClaw prompt");
+    expect(dmTexts[1]).toContain("Create a concise Web3 brief");
     expect(await readFile(join(root, "custom-runs", "2026-06-28", "core.md"), "utf8")).toContain(
       "# 6月28日 Web3 素材库 | Core Material Pack"
     );

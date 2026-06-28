@@ -4,7 +4,13 @@ import type { CorePack, FeishuWriteResult, SocialPack } from "../domain/types.js
 import type { FeishuClient } from "../feishu/client.js";
 import { loadConfig } from "../config/loadConfig.js";
 import { createFeishuClient } from "../feishu/client.js";
-import { buildSocialPack, renderSocialPackMarkdown, renderXPromptMarkdown } from "../package-builder/socialPack.js";
+import {
+  buildSocialPack,
+  renderSocialOpenClawPrompt,
+  renderSocialPackMarkdown,
+  renderXDocumentMarkdown,
+  renderXiaohongshuDocumentMarkdown
+} from "../package-builder/socialPack.js";
 import { appendLog } from "../state/logger.js";
 import { getRunPaths } from "../state/paths.js";
 import { readCorePack, writeJsonFile, writeTextFile } from "../state/runStore.js";
@@ -118,8 +124,8 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
         appId: config.env.FEISHU_APP_ID,
         appSecret: config.env.FEISHU_APP_SECRET
       });
-    const xiaohongshuResult = await feishu.appendMarkdown(config.mia.xiaohongshuDocToken, pack.xiaohongshuPrompt);
-    const xResult = await feishu.appendMarkdown(config.mia.xDocToken, renderXPromptMarkdown(pack));
+    const xiaohongshuResult = await feishu.appendMarkdown(config.mia.xiaohongshuDocToken, renderXiaohongshuDocumentMarkdown(pack));
+    const xResult = await feishu.appendMarkdown(config.mia.xDocToken, renderXDocumentMarkdown(pack));
     const dmResult = await feishu.sendText(
       config.mia.feishuOpenId,
       formatDmText({
@@ -129,16 +135,20 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
         xResult
       })
     );
+    const openClawPromptDmResult = xiaohongshuResult.ok && xResult.ok
+      ? await feishu.sendText(config.mia.feishuOpenId, renderSocialOpenClawPrompt(pack))
+      : undefined;
 
     pack = {
       ...pack,
       feishuWriteResults: [xiaohongshuResult, xResult],
-      dmResult
+      dmResult,
+      openClawPromptDmResult
     };
     await writeJsonFile(paths.socialJson, pack);
     await appendLog(
       logPath,
-      `daily-social-pack finished status=${xiaohongshuResult.ok && xResult.ok && dmResult.ok ? "ok" : "degraded"}`
+      `daily-social-pack finished status=${xiaohongshuResult.ok && xResult.ok && dmResult.ok && (openClawPromptDmResult?.ok ?? true) ? "ok" : "degraded"}`
     );
 
     return pack;

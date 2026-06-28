@@ -8,7 +8,7 @@ import { normalizeSourceItems } from "../filtering/normalize.js";
 import { scoreCandidates } from "../filtering/score.js";
 import { selectEvents } from "../filtering/select.js";
 import { fetchMarketSnapshot } from "../market/marketSnapshot.js";
-import { buildCorePack, renderCorePackMarkdown } from "../package-builder/corePack.js";
+import { buildCorePack, renderCoreOpenClawPrompt, renderCorePackMarkdown } from "../package-builder/corePack.js";
 import { fetchFixedSources } from "../sources/fixedSources.js";
 import { appendLog } from "../state/logger.js";
 import { getRunPaths } from "../state/paths.js";
@@ -139,15 +139,22 @@ export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<Cor
       marketSnapshot
     })
   );
+  const openClawPromptDmResult = feishuWriteResult.ok
+    ? await feishu.sendText(config.mia.feishuOpenId, renderCoreOpenClawPrompt({ ...pack, feishuWriteResult, dmResult }))
+    : undefined;
 
   pack = {
     ...pack,
-    status: feishuWriteResult.ok && dmResult.ok ? "ok" : "degraded",
+    status: feishuWriteResult.ok && dmResult.ok && (openClawPromptDmResult?.ok ?? true) ? "ok" : "degraded",
     feishuWriteResult,
-    dmResult
+    dmResult,
+    openClawPromptDmResult
   };
   await writeJsonFile(paths.coreJson, pack);
-  await appendLog(logPath, `daily-core finished status=${feishuWriteResult.ok && dmResult.ok ? "ok" : "degraded"}`);
+  await appendLog(
+    logPath,
+    `daily-core finished status=${feishuWriteResult.ok && dmResult.ok && (openClawPromptDmResult?.ok ?? true) ? "ok" : "degraded"}`
+  );
 
   return pack;
 }

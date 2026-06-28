@@ -31,23 +31,38 @@ export function buildCorePack(params: BuildCorePackParams): CorePack {
   };
 }
 
+function themeLabel(theme: ScoredEvent["theme"]): string {
+  const labels: Record<ScoredEvent["theme"], string> = {
+    regulation: "监管 / 合规",
+    infrastructure: "基础设施",
+    security: "安全 / 风险",
+    marketStructure: "市场结构",
+    aiCrypto: "AI x Crypto",
+    other: "其他"
+  };
+
+  return labels[theme];
+}
+
 export function renderCorePackMarkdown(pack: CorePack): string {
   const selectedEvents = pack.selectedEvents
     .map((event, index) =>
       [
         `## ${index + 1}. ${event.title}`,
         "",
-        `Theme: ${event.theme}`,
-        `Published: ${event.publishedAt}`,
-        `Sources: ${sourceLinks(event.sources)}`,
+        `主题：${themeLabel(event.theme)}`,
+        `发布时间：${event.publishedAt}`,
+        `来源：${sourceLinks(event.sources)}`,
         "",
-        `Summary: ${event.summary}`,
+        `原始摘要：${event.summary}`,
         "",
-        `Why it matters: ${event.selectionReason ?? "High-signal event selected by score."}`,
+        `一句话中文解读：这条素材属于${themeLabel(event.theme)}方向，重点看它对 Web3 叙事、用户信任、产品机会或风险判断的影响。`,
         "",
-        `Mia angle: This can become a practical lens on ${event.theme} rather than a headline recap.`,
+        `为什么重要：${event.selectionReason ?? "高信号事件，值得进入今日素材池。"}`,
         "",
-        "Possible extension: turn this into an explainer, a risk note, or a platform-specific discussion prompt."
+        `Mia 角度：把它当成一个${themeLabel(event.theme)}切口，而不是只复述新闻标题。`,
+        "",
+        "可延展方向：解释背景、提炼风险、做平台差异化观点，或发展成小红书 / X 的内容角度。"
       ].join("\n")
     )
     .join("\n\n");
@@ -60,28 +75,37 @@ export function renderCorePackMarkdown(pack: CorePack): string {
   return [
     ...dailyUpdateHeader(pack.date, "Web3 素材库 | Core Material Pack"),
     "",
-    `Window: ${pack.window}`,
+    `时间窗口：${pack.window}`,
     `Run ID: ${pack.runId}`,
     "",
-    "## Source health",
+    "## 来源健康",
     bullet(
       pack.sourceHealth.map(
         (item) => `${item.source}: ${item.ok ? "ok" : "failed"} (${item.itemCount} items${item.error ? `, ${item.error}` : ""})`
       )
     ),
     "",
-    "## Market snapshot",
+    "## 市场概览",
     pack.marketSnapshot.degraded ? `Degraded: ${pack.marketSnapshot.degradationReason}` : pack.marketSnapshot.trendSummary,
     "",
-    "## Delivery status",
+    "## 交付状态",
     deliveryStatus,
     "",
-    "## Selected events",
-    selectedEvents || "No high-signal events selected.",
+    "## 入选素材",
+    selectedEvents || "暂无入选高信号素材。"
+  ].join("\n");
+}
+
+export function renderCoreOpenClawPrompt(pack: CorePack): string {
+  return [
+    `OpenClaw prompt | Web3 素材库 | ${pack.date}`,
     "",
-    "## Generation prompt",
-    "```text",
     pack.generationPrompt,
-    "```"
+    "",
+    "Use the selected material below as source context. Produce Chinese-first output for Mia. Keep facts and interpretation separated.",
+    "",
+    pack.selectedEvents
+      .map((event, index) => `${index + 1}. ${event.title}\nSummary: ${event.summary}\nSources: ${sourceLinks(event.sources)}`)
+      .join("\n\n")
   ].join("\n");
 }

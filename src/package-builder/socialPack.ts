@@ -72,6 +72,73 @@ export function renderXPromptMarkdown(pack: SocialPack): string {
   ].join("\n");
 }
 
+function topicLinesForDocument(pack: SocialPack): string[] {
+  return pack.selectedTopics.flatMap((topic, index) => [
+    `${index + 1}. ${topic.title}`,
+    `原始摘要：${topic.summary}`,
+    "中文角度：把这条素材转成用户能理解的 Web3 变化，而不是只解释价格或项目名。",
+    `来源：${sourceLinks(topic.sources)}`,
+    ""
+  ]);
+}
+
+export function renderXiaohongshuDocumentMarkdown(pack: SocialPack): string {
+  return [
+    ...dailyUpdateHeader(pack.date, "小红书草稿 | Web3 早报角度"),
+    "",
+    "## 中文草稿骨架",
+    "",
+    "### 标题备选",
+    bullet(pack.selectedTopics.map((topic) => `${topic.title}：这件事值得普通 Web3 观察者关注`)),
+    "",
+    "### 正文成稿",
+    "今天的素材先围绕这些信号展开，重点不是复述新闻，而是把它们变成用户能看懂的机会、风险和判断框架。",
+    "",
+    ...topicLinesForDocument(pack),
+    "## 收尾",
+    "这不是投资建议，只是把今天值得跟踪的 Web3 信号整理成后续可写作的素材。"
+  ].join("\n");
+}
+
+export function renderXDocumentMarkdown(pack: SocialPack): string {
+  return [
+    ...dailyUpdateHeader(pack.date, "X 草稿 | Web3 早报角度"),
+    "",
+    "## English",
+    "",
+    "Today's angle: turn the selected Web3 signals into a clear thread about what changed, why it matters, and what to watch next.",
+    "",
+    ...pack.selectedTopics.flatMap((topic, index) => [
+      `${index + 1}. ${topic.title}`,
+      `Source summary: ${topic.summary}`,
+      "Use this as a signal, not as investment advice.",
+      ""
+    ]),
+    "## 中文",
+    "",
+    "今天的角度：把入选 Web3 信号整理成一条清晰的中文线索，讲清楚发生了什么、为什么重要、接下来要看什么。",
+    "",
+    ...topicLinesForDocument(pack)
+  ].join("\n");
+}
+
+export function renderSocialOpenClawPrompt(pack: SocialPack): string {
+  return [
+    `OpenClaw prompt | Social pack | ${pack.date}`,
+    "",
+    "Use the source facts below to produce Chinese-first drafts. Keep output grounded, do not invent claims, and keep final copy separate from source notes.",
+    "",
+    "## Xiaohongshu task",
+    pack.xiaohongshuPrompt,
+    "",
+    "## English X task",
+    pack.englishXPrompt,
+    "",
+    "## 中文 X task",
+    pack.chineseXPrompt
+  ].join("\n");
+}
+
 export function renderSocialPackMarkdown(pack: SocialPack): string {
   const topicSection = pack.selectedTopics
     .map((topic, index) =>
@@ -92,15 +159,11 @@ export function renderSocialPackMarkdown(pack: SocialPack): string {
     "",
     topicSection,
     "",
-    "## XiaoHongShu prompt",
-    "```text",
-    pack.xiaohongshuPrompt,
-    "```",
+    "## 小红书文档预览",
+    renderXiaohongshuDocumentMarkdown(pack),
     "",
-    "## English X prompt",
-    "```text",
-    renderXPromptMarkdown(pack),
-    "```",
+    "## X 文档预览",
+    renderXDocumentMarkdown(pack),
     "",
     "## Boundaries",
     bullet(pack.factBoundaries),
@@ -108,6 +171,6 @@ export function renderSocialPackMarkdown(pack: SocialPack): string {
     "## Risk reminders",
     bullet(pack.riskReminders),
     "",
-    "Draft only, not final publishable copy."
+    "文档只保留素材与草稿骨架；OpenClaw prompt 会通过飞书私信单独发送。"
   ].join("\n");
 }

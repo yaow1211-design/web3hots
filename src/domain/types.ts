@@ -138,6 +138,7 @@ export interface CorePack {
   jsonPath: string;
   feishuWriteResult?: FeishuWriteResult;
   dmResult?: FeishuDmResult;
+  openClawPromptDmResult?: FeishuDmResult;
 }
 
 export interface SocialPack {
@@ -154,6 +155,7 @@ export interface SocialPack {
   jsonPath: string;
   feishuWriteResults?: FeishuWriteResult[];
   dmResult?: FeishuDmResult;
+  openClawPromptDmResult?: FeishuDmResult;
 }
 
 export interface RunRecord {
