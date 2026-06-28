@@ -43,6 +43,40 @@ describe("createFeishuClient", () => {
     expect(calls[0]).toContain("children");
   });
 
+  it("appends multiline markdown in a single documentBlockChildren.create request", async () => {
+    const calls: unknown[] = [];
+    const sdkClient = {
+      docx: {
+        documentBlockChildren: {
+          create: async (args: unknown) => {
+            calls.push(args);
+            return { code: 0, data: { children: [{ block_id: "block1" }] } };
+          }
+        }
+      },
+      im: {
+        message: {
+          create: async () => ({ code: 0, data: { message_id: "msg1" } })
+        }
+      }
+    };
+
+    const client = createFeishuClient({ appId: "cli", appSecret: "secret", client: sdkClient });
+
+    await client.appendMarkdown("doc_token", "# Title\n\n- Item");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual({
+      path: { document_id: "doc_token", block_id: "doc_token" },
+      data: {
+        children: [
+          { block_type: 2, text: { elements: [{ text_run: { content: "# Title" } }] } },
+          { block_type: 2, text: { elements: [{ text_run: { content: "- Item" } }] } }
+        ]
+      }
+    });
+  });
+
   it("returns structured errors for document and DM failures", async () => {
     const sdkClient = {
       docx: {

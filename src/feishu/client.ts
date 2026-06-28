@@ -37,15 +37,13 @@ export function createFeishuClient(params: { appId: string; appSecret: string; c
       try {
         const blocks = markdownToPlainBlocks(markdown);
 
-        for (const block of blocks) {
-          const response = await client.docx.documentBlockChildren.create({
-            path: { document_id: docToken, block_id: docToken },
-            data: { children: [block] }
-          });
+        const response = await client.docx.documentBlockChildren.create({
+          path: { document_id: docToken, block_id: docToken },
+          data: { children: blocks }
+        });
 
-          if (response.code !== 0) {
-            return { ok: false, docToken, error: failureMessage(response, "Feishu doc write failed") };
-          }
+        if (response.code !== 0) {
+          return { ok: false, docToken, error: failureMessage(response, "Feishu doc write failed") };
         }
 
         return {
