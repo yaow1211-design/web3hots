@@ -38,4 +38,39 @@ describe("filtering pipeline", () => {
     expect(selected[0].theme).toBe("regulation");
     expect(selected[0].selectionReason).toContain("structural impact");
   });
+
+  it("does not give a multi-source content boost for same-source duplicates", () => {
+    const sameSourceItems = [
+      {
+        id: "cointelegraph:a",
+        source: "cointelegraph",
+        sourceType: "rss" as const,
+        title: "SEC issues new stablecoin custody guidance",
+        url: "https://cointelegraph.com/news/sec-stablecoin-custody-guidance-a",
+        publishedAt: "2026-06-28T00:30:00.000Z",
+        summary: "The guidance changes how custodians report reserve and redemption risk.",
+        rawText: "SEC stablecoin custody reserve redemption risk",
+        fetchedAt: "2026-06-28T02:00:00.000Z"
+      },
+      {
+        id: "cointelegraph:b",
+        source: "cointelegraph",
+        sourceType: "rss" as const,
+        title: "SEC issues new stablecoin custody guidance update",
+        url: "https://cointelegraph.com/news/sec-stablecoin-custody-guidance-b",
+        publishedAt: "2026-06-28T00:45:00.000Z",
+        summary: "The regulator updated expectations for stablecoin custody disclosures.",
+        rawText: "SEC regulator stablecoin custody disclosures reserve",
+        fetchedAt: "2026-06-28T02:00:00.000Z"
+      }
+    ];
+
+    const normalized = normalizeSourceItems(sameSourceItems, new Date("2026-06-28T02:00:00.000Z"), 24);
+    const deduped = dedupeCandidates(normalized);
+    const scored = scoreCandidates(deduped, config);
+
+    expect(scored).toHaveLength(1);
+    expect(scored[0].sources).toHaveLength(2);
+    expect(scored[0].contentPotentialScore).toBe(0.65);
+  });
 });

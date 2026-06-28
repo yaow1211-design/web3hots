@@ -27,10 +27,11 @@ export function scoreCandidates(candidates: CandidateEvent[], config: DefaultCon
 
   return candidates.map((event) => {
     const credibilityScore = Math.max(...event.sources.map((source) => credibilityBySource.get(source.source) ?? 0.5));
+    const uniqueSourceCount = new Set(event.sources.map((source) => source.source)).size;
     const timelinessScore = 1;
     const structuralImpact = impactScore(event);
     const miaAngleScore = event.theme === "other" ? 0.35 : 0.8;
-    const contentPotentialScore = event.sources.length > 1 ? 0.85 : 0.65;
+    const contentPotentialScore = uniqueSourceCount > 1 ? 0.85 : 0.65;
     const themeWeight = themeWeightFor(event, config);
     const totalScore = Number(((credibilityScore + timelinessScore + structuralImpact + miaAngleScore + contentPotentialScore) * themeWeight).toFixed(3));
     const rejectionReason = hasPricePrediction(event) ? "low-signal price prediction" : undefined;
