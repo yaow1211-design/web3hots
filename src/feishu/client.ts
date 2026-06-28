@@ -61,7 +61,7 @@ export function createFeishuClient(params: { appId: string; appSecret: string; c
         return {
           ok: true,
           docToken,
-          url: `https://applink.feishu.cn/docx/${docToken}`
+          url: `https://my.feishu.cn/docx/${docToken}`
         };
       } catch (error) {
         return {

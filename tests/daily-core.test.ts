@@ -58,7 +58,7 @@ describe("runDailyCore", () => {
       feishuClient: {
         appendMarkdown: async () => {
           appendMarkdownCalls += 1;
-          return { ok: true, docToken: "material_doc", url: "https://applink.feishu.cn/docx/material_doc" };
+          return { ok: true, docToken: "material_doc", url: "https://my.feishu.cn/docx/material_doc" };
         },
         sendText: async () => {
           sendTextCalls += 1;
@@ -151,7 +151,7 @@ describe("runDailyCore", () => {
             markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.md")),
             jsonExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.json"))
           });
-          return { ok: true, docToken: "material_doc", url: "https://applink.feishu.cn/docx/material_doc" };
+          return { ok: true, docToken: "material_doc", url: "https://my.feishu.cn/docx/material_doc" };
         },
         sendText: async () => {
           deliveryChecks.push({

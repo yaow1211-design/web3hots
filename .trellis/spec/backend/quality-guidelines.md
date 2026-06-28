@@ -45,6 +45,18 @@ Required behavior:
 - If any batch returns a non-zero Feishu response code, return the structured document write failure immediately.
 - Unit tests must cover both the single-request path and the multi-request chunking path.
 
+### Feishu document links must be browser-openable
+
+When returning a document link to the user after a successful Feishu docx write, build the URL with `https://my.feishu.cn/docx/<doc_token>`.
+
+Why: `https://applink.feishu.cn/docx/<doc_token>` can resolve to an AppLink handoff page that Chrome reports as invalid, even when the document token and write operation are valid.
+
+Required behavior:
+
+- `FeishuWriteResult.url` must use the `my.feishu.cn` docx URL form.
+- Unit tests for Feishu delivery must assert the returned URL domain.
+- Do not log, commit, or print real doc tokens from local config while debugging links.
+
 ---
 
 ## Testing Requirements

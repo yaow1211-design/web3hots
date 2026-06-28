@@ -38,7 +38,7 @@ describe("createFeishuClient", () => {
     expect(result).toEqual({
       ok: true,
       docToken: "doc_token",
-      url: "https://applink.feishu.cn/docx/doc_token"
+      url: "https://my.feishu.cn/docx/doc_token"
     });
     expect(calls[0]).toContain("children");
   });

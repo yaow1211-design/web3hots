@@ -203,7 +203,7 @@ describe("runDailySocialPack", () => {
             markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "social-pack.md")),
             jsonExists: await fileExists(join(root, "custom-runs", "2026-06-28", "social-pack.json"))
           });
-          return { ok: true, docToken, url: `https://applink.feishu.cn/docx/${docToken}` };
+          return { ok: true, docToken, url: `https://my.feishu.cn/docx/${docToken}` };
         },
         sendText: async () => {
           deliveryChecks.push({
@@ -229,8 +229,8 @@ describe("runDailySocialPack", () => {
     const savedJson = JSON.parse(await readFile(join(root, "custom-runs", "2026-06-28", "social-pack.json"), "utf8"));
     expect(savedJson.runId).toContain("social-2026-06-28");
     expect(savedJson.feishuWriteResults).toEqual([
-      { ok: true, docToken: "xhs_doc", url: "https://applink.feishu.cn/docx/xhs_doc" },
-      { ok: true, docToken: "x_doc", url: "https://applink.feishu.cn/docx/x_doc" }
+      { ok: true, docToken: "xhs_doc", url: "https://my.feishu.cn/docx/xhs_doc" },
+      { ok: true, docToken: "x_doc", url: "https://my.feishu.cn/docx/x_doc" }
     ]);
     expect(savedJson.dmResult).toMatchObject({ ok: false, error: "DM unavailable" });
   });
