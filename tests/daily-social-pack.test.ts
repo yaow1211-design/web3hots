@@ -64,7 +64,8 @@ describe("runDailySocialPack", () => {
       marketSnapshot: { trendSummary: "degraded", sources: [], degraded: true, fetchedAt: "2026-06-28T02:00:00.000Z" },
       generationPrompt: "prompt",
       markdownPath: join(root, "custom-runs", "2026-06-28", "core.md"),
-      jsonPath: coreJson
+      jsonPath: coreJson,
+      feishuWriteResult: { ok: true, docToken: "material_doc", url: "https://my.feishu.cn/docx/material_doc" }
     });
 
     let appendMarkdownCalls = 0;
@@ -188,7 +189,8 @@ describe("runDailySocialPack", () => {
       marketSnapshot: { trendSummary: "degraded", sources: [], degraded: true, fetchedAt: "2026-06-28T02:00:00.000Z" },
       generationPrompt: "prompt",
       markdownPath: join(root, "custom-runs", "2026-06-28", "core.md"),
-      jsonPath: coreJson
+      jsonPath: coreJson,
+      feishuWriteResult: { ok: true, docToken: "material_doc", url: "https://my.feishu.cn/docx/material_doc" }
     });
 
     const deliveryChecks: Array<{ step: string; markdownExists: boolean; jsonExists: boolean }> = [];
@@ -230,19 +232,32 @@ describe("runDailySocialPack", () => {
       { step: "sendText", markdownExists: true, jsonExists: true }
     ]);
     expect(appendedMarkdown[0]).toMatchObject({ docToken: "xhs_doc" });
-    expect(appendedMarkdown[0].markdown).toContain("# 6月28日 小红书草稿 | Web3 早报角度");
+    expect(appendedMarkdown[0].markdown).toContain("# 6月28日 小红书内容 | Web3 早报角度");
     expect(appendedMarkdown[0].markdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
-    expect(appendedMarkdown[0].markdown).toContain("## 中文草稿骨架");
+    expect(appendedMarkdown[0].markdown).toContain("## 中文内容");
     expect(appendedMarkdown[0].markdown).not.toContain("Write a Xiaohongshu");
     expect(appendedMarkdown[0].markdown).not.toContain("Do not produce final publishable copy.");
+    expect(appendedMarkdown[0].markdown).not.toContain("草稿");
+    expect(appendedMarkdown[0].markdown).not.toContain("非最终");
+    expect(appendedMarkdown[0].markdown).not.toContain("OpenClaw prompt");
     expect(appendedMarkdown[1]).toMatchObject({ docToken: "x_doc" });
-    expect(appendedMarkdown[1].markdown).toContain("# 6月28日 X 草稿 | Web3 早报角度");
+    expect(appendedMarkdown[1].markdown).toContain("# 6月28日 X 内容 | Web3 早报角度");
     expect(appendedMarkdown[1].markdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
     expect(appendedMarkdown[1].markdown.indexOf("## English")).toBeLessThan(appendedMarkdown[1].markdown.indexOf("## 中文"));
     expect(appendedMarkdown[1].markdown).not.toContain("Write an English X thread");
     expect(appendedMarkdown[1].markdown).not.toContain("Do not produce final publishable copy.");
-    expect(dmTexts[0]).toContain("Web3 social creation package");
+    expect(appendedMarkdown[1].markdown).not.toContain("草稿");
+    expect(appendedMarkdown[1].markdown).not.toContain("非最终");
+    expect(appendedMarkdown[1].markdown).not.toContain("OpenClaw prompt");
+    expect(dmTexts).toHaveLength(2);
+    expect(dmTexts[0]).toContain("已更新的 3 个文档链接");
+    expect(dmTexts[0]).toContain("Mia 素材库: https://my.feishu.cn/docx/material_doc");
+    expect(dmTexts[0]).toContain("Mia 小红书内容: https://my.feishu.cn/docx/xhs_doc");
+    expect(dmTexts[0]).toContain("Mia X 内容: https://my.feishu.cn/docx/x_doc");
+    expect(dmTexts[0]).not.toContain("not final publishable");
+    expect(dmTexts[0]).not.toContain("草稿");
     expect(dmTexts[1]).toContain("OpenClaw prompt");
+    expect(dmTexts[1]).toContain("OpenClaw prompt | Social pack | 2026-06-28");
     expect(dmTexts[1]).toContain("Write a Xiaohongshu draft");
     expect(dmTexts[1]).toContain("Write an English X thread");
     expect(await readFile(join(root, "custom-runs", "2026-06-28", "social-pack.md"), "utf8")).toContain(
@@ -290,7 +305,8 @@ describe("runDailySocialPack", () => {
       marketSnapshot: { trendSummary: "degraded", sources: [], degraded: true, fetchedAt: "2026-06-28T02:00:00.000Z" },
       generationPrompt: "prompt",
       markdownPath: join(root, "custom-runs", "2026-06-28", "core.md"),
-      jsonPath: coreJson
+      jsonPath: coreJson,
+      feishuWriteResult: { ok: true, docToken: "material_doc", url: "https://my.feishu.cn/docx/material_doc" }
     });
 
     let dmText = "";
@@ -311,6 +327,7 @@ describe("runDailySocialPack", () => {
       { ok: false, docToken: "xhs_doc", error: "doc failed" },
       { ok: false, docToken: "x_doc", error: "doc failed" }
     ]);
+    expect(pack.openClawPromptDmResult).toBeUndefined();
     expect(dmText).toContain("degraded");
     expect(dmText).toContain("doc failed");
     expect(dmText).not.toContain("package ready");

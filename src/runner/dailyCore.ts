@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { CorePack, FeishuWriteResult, MarketApiConfig, MarketSnapshot, SourceItem } from "../domain/types.js";
+import type { CorePack, MarketApiConfig, MarketSnapshot, SourceItem } from "../domain/types.js";
 import type { FeishuClient } from "../feishu/client.js";
 import { loadConfig } from "../config/loadConfig.js";
 import { createFeishuClient } from "../feishu/client.js";
@@ -8,7 +8,7 @@ import { normalizeSourceItems } from "../filtering/normalize.js";
 import { scoreCandidates } from "../filtering/score.js";
 import { selectEvents } from "../filtering/select.js";
 import { fetchMarketSnapshot } from "../market/marketSnapshot.js";
-import { buildCorePack, renderCoreOpenClawPrompt, renderCorePackMarkdown } from "../package-builder/corePack.js";
+import { buildCorePack, renderCorePackMarkdown } from "../package-builder/corePack.js";
 import { fetchFixedSources } from "../sources/fixedSources.js";
 import { appendLog } from "../state/logger.js";
 import { getRunPaths } from "../state/paths.js";
@@ -36,28 +36,6 @@ function dateKey(now: Date, timezone: string): string {
   const part = (type: "year" | "month" | "day") => parts.find((item) => item.type === type)?.value;
 
   return `${part("year")}-${part("month")}-${part("day")}`;
-}
-
-function formatDmText(params: {
-  date: string;
-  selectedCount: number;
-  feishuWriteResult: FeishuWriteResult;
-  marketSnapshot: MarketSnapshot;
-}): string {
-  const docStatus = params.feishuWriteResult.ok
-    ? `Doc: ${params.feishuWriteResult.url ?? params.feishuWriteResult.docToken}`
-    : `Doc delivery failed: ${params.feishuWriteResult.error ?? "unknown error"}`;
-
-  return [
-    params.feishuWriteResult.ok
-      ? `Web3 core material package ready: ${params.date}`
-      : `Web3 core material package degraded: ${params.date}`,
-    `Selected events: ${params.selectedCount}`,
-    docStatus,
-    params.marketSnapshot.degraded
-      ? `Market module degraded: ${params.marketSnapshot.degradationReason ?? "unknown"}`
-      : "Market module available"
-  ].join("\n");
 }
 
 export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<CorePack> {
@@ -130,31 +108,14 @@ export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<Cor
       appSecret: config.env.FEISHU_APP_SECRET
     });
   const feishuWriteResult = await feishu.appendMarkdown(config.mia.materialDocToken, markdown);
-  const dmResult = await feishu.sendText(
-    config.mia.feishuOpenId,
-    formatDmText({
-      date,
-      selectedCount: selectedEvents.length,
-      feishuWriteResult,
-      marketSnapshot
-    })
-  );
-  const openClawPromptDmResult = feishuWriteResult.ok
-    ? await feishu.sendText(config.mia.feishuOpenId, renderCoreOpenClawPrompt({ ...pack, feishuWriteResult, dmResult }))
-    : undefined;
 
   pack = {
     ...pack,
-    status: feishuWriteResult.ok && dmResult.ok && (openClawPromptDmResult?.ok ?? true) ? "ok" : "degraded",
-    feishuWriteResult,
-    dmResult,
-    openClawPromptDmResult
+    status: feishuWriteResult.ok ? "ok" : "degraded",
+    feishuWriteResult
   };
   await writeJsonFile(paths.coreJson, pack);
-  await appendLog(
-    logPath,
-    `daily-core finished status=${feishuWriteResult.ok && dmResult.ok && (openClawPromptDmResult?.ok ?? true) ? "ok" : "degraded"}`
-  );
+  await appendLog(logPath, `daily-core finished status=${feishuWriteResult.ok ? "ok" : "degraded"}`);
 
   return pack;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MiaConfig, ScoredEvent, SourceItem, Theme } from "../src/domain/types.js";
-import { buildCorePack, renderCoreOpenClawPrompt, renderCorePackMarkdown } from "../src/package-builder/corePack.js";
+import { buildCorePack, renderCorePackMarkdown } from "../src/package-builder/corePack.js";
 import {
   buildSocialPack,
   renderSocialOpenClawPrompt,
@@ -51,7 +51,7 @@ const event = scoredEvent(sourceItems[0], {
 });
 
 describe("package builders", () => {
-  it("builds a core material package markdown with facts, Mia angle, and prompt", () => {
+  it("builds a core material package markdown with facts and Mia angle without process prompts", () => {
     const pack = buildCorePack({
       runId: "core-2026-06-28",
       date: "2026-06-28",
@@ -83,8 +83,6 @@ describe("package builders", () => {
     expect(markdown).not.toContain("Generation prompt");
     expect(markdown).not.toContain("Create a concise Web3 brief");
     expect(pack.generationPrompt).toContain("Create a concise Web3 brief");
-    expect(renderCoreOpenClawPrompt(pack)).toContain("OpenClaw prompt");
-    expect(renderCoreOpenClawPrompt(pack)).toContain("Create a concise Web3 brief");
   });
 
   it("selects the top two social topics by content potential and creates topic fact boundaries", () => {
@@ -135,19 +133,28 @@ describe("package builders", () => {
       'Only claim what sources support for "Highest-potential market structure update".',
       'Only claim what sources support for "Second-potential security report".'
     ]);
-    expect(xiaohongshuDocument).toContain("# 6月28日 小红书草稿 | Web3 早报角度");
-    expect(xiaohongshuDocument).toContain("## 中文草稿骨架");
+    expect(xiaohongshuDocument).toContain("# 6月28日 小红书内容 | Web3 早报角度");
+    expect(xiaohongshuDocument).toContain("## 中文内容");
     expect(xiaohongshuDocument).toContain("标题备选");
     expect(xiaohongshuDocument).not.toContain("Write a Xiaohongshu");
     expect(xiaohongshuDocument).not.toContain("Do not produce final publishable copy.");
-    expect(xDocument).toContain("# 6月28日 X 草稿 | Web3 早报角度");
+    expect(xiaohongshuDocument).not.toContain("草稿");
+    expect(xiaohongshuDocument).not.toContain("非最终");
+    expect(xiaohongshuDocument).not.toContain("OpenClaw prompt");
+    expect(xDocument).toContain("# 6月28日 X 内容 | Web3 早报角度");
     expect(xDocument.indexOf("## English")).toBeLessThan(xDocument.indexOf("## 中文"));
     expect(xDocument).not.toContain("Write an English X thread");
     expect(xDocument).not.toContain("Do not produce final publishable copy.");
+    expect(xDocument).not.toContain("草稿");
+    expect(xDocument).not.toContain("非最终");
+    expect(xDocument).not.toContain("OpenClaw prompt");
     expect(markdown).toContain("# 6月28日 Social Package | Web3 早报角度");
     expect(markdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
     expect(markdown).not.toContain("XiaoHongShu prompt");
     expect(markdown).not.toContain("English X prompt");
+    expect(markdown).not.toContain("草稿");
+    expect(markdown).not.toContain("非最终");
+    expect(markdown).not.toContain("OpenClaw prompt");
     expect(markdown).toContain("## Topic 1: Highest-potential market structure update");
     expect(markdown).toContain("中文角度");
     expect(openClawPrompt).toContain("OpenClaw prompt");

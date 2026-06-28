@@ -72,10 +72,13 @@ Date: June 28, 2026
 Required behavior:
 
 - Core material Markdown must start with a dated title such as `# 6月28日 Web3 素材库 | Core Material Pack`.
-- Feishu document content must be Chinese-readable material or draft structure, not raw OpenClaw instructions.
-- Xiaohongshu document content must start with a dated title and contain a Chinese draft skeleton.
-- X document delivery must start with a dated title and include `## English` before `## 中文`.
-- OpenClaw prompts must be sent in a separate Feishu DM after successful document writes, not embedded in any Feishu document body.
+- Feishu document content must be Chinese-readable material/content structure, not raw OpenClaw instructions or process notes.
+- Xiaohongshu document content must start with a dated title such as `# 6月28日 小红书内容 | Web3 早报角度`.
+- X document delivery must start with a dated title such as `# 6月28日 X 内容 | Web3 早报角度` and include `## English` before `## 中文`.
+- Feishu document bodies must not include `OpenClaw prompt`, `Do not produce final publishable copy`, `草稿`, `非最终`, or similar process/non-final wording.
+- After a full `daily-core` plus `daily-social-pack` run, Feishu DM delivery must send exactly two user-facing messages: one links summary containing the three updated document links, then one Social pack OpenClaw prompt.
+- `daily-core` writes the core material document and local artifacts only; it must not send a Feishu DM.
+- Only the Social pack OpenClaw prompt is sent by DM. Core OpenClaw prompts must not be DM'd.
 - Markdown `#` and `##` headings must be converted to Feishu heading blocks, not plain text blocks.
 - When top-inserting batches into Feishu with `index: 0`, send chunks in reverse chunk order but preserve the order within each chunk so the displayed document order matches the source Markdown.
 - Unit tests must cover both the rendered local Markdown and the actual strings passed to Feishu delivery.

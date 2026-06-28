@@ -33,28 +33,31 @@ function dateKey(now: Date, timezone: string): string {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-function failedWriteLine(label: string, result: FeishuWriteResult): string {
+function writeResultLine(label: string, result?: FeishuWriteResult): string {
+  if (!result) {
+    return `${label}: unavailable`;
+  }
+
   return result.ok
-    ? `${label} doc: ${result.url ?? result.docToken}`
-    : `${label} doc delivery failed: ${result.error ?? "unknown error"}`;
+    ? `${label}: ${result.url ?? result.docToken}`
+    : `${label}: delivery failed: ${result.error ?? "unknown error"}`;
 }
 
 function formatDmText(params: {
   date: string;
-  selectedCount: number;
+  materialResult?: FeishuWriteResult;
   xiaohongshuResult: FeishuWriteResult;
   xResult: FeishuWriteResult;
 }): string {
-  const writesOk = params.xiaohongshuResult.ok && params.xResult.ok;
+  const writesOk = (params.materialResult?.ok ?? false) && params.xiaohongshuResult.ok && params.xResult.ok;
 
   return [
     writesOk
-      ? `Web3 social creation package ready: ${params.date}`
-      : `Web3 social creation package degraded: ${params.date}`,
-    `Selected topics: ${params.selectedCount}`,
-    failedWriteLine("Xiaohongshu", params.xiaohongshuResult),
-    failedWriteLine("X", params.xResult),
-    "These are creation prompts, not final publishable posts."
+      ? `已更新的 3 个文档链接 | ${params.date}`
+      : `已更新的 3 个文档链接 degraded | ${params.date}`,
+    writeResultLine("Mia 素材库", params.materialResult),
+    writeResultLine("Mia 小红书内容", params.xiaohongshuResult),
+    writeResultLine("Mia X 内容", params.xResult)
   ].join("\n");
 }
 
@@ -130,7 +133,7 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
       config.mia.feishuOpenId,
       formatDmText({
         date,
-        selectedCount: pack.selectedTopics.length,
+        materialResult: corePack.feishuWriteResult,
         xiaohongshuResult,
         xResult
       })

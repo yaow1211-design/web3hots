@@ -64,7 +64,7 @@ export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
 
 export function renderXPromptMarkdown(pack: SocialPack): string {
   return [
-    ...dailyUpdateHeader(pack.date, "X 草稿 | Web3 早报角度"),
+    ...dailyUpdateHeader(pack.date, "X 内容 | Web3 早报角度"),
     "",
     pack.englishXPrompt,
     "",
@@ -84,9 +84,9 @@ function topicLinesForDocument(pack: SocialPack): string[] {
 
 export function renderXiaohongshuDocumentMarkdown(pack: SocialPack): string {
   return [
-    ...dailyUpdateHeader(pack.date, "小红书草稿 | Web3 早报角度"),
+    ...dailyUpdateHeader(pack.date, "小红书内容 | Web3 早报角度"),
     "",
-    "## 中文草稿骨架",
+    "## 中文内容",
     "",
     "### 标题备选",
     bullet(pack.selectedTopics.map((topic) => `${topic.title}：这件事值得普通 Web3 观察者关注`)),
@@ -102,7 +102,7 @@ export function renderXiaohongshuDocumentMarkdown(pack: SocialPack): string {
 
 export function renderXDocumentMarkdown(pack: SocialPack): string {
   return [
-    ...dailyUpdateHeader(pack.date, "X 草稿 | Web3 早报角度"),
+    ...dailyUpdateHeader(pack.date, "X 内容 | Web3 早报角度"),
     "",
     "## English",
     "",
@@ -159,18 +159,16 @@ export function renderSocialPackMarkdown(pack: SocialPack): string {
     "",
     topicSection,
     "",
-    "## 小红书文档预览",
+    "## 小红书内容",
     renderXiaohongshuDocumentMarkdown(pack),
     "",
-    "## X 文档预览",
+    "## X 内容",
     renderXDocumentMarkdown(pack),
     "",
     "## Boundaries",
     bullet(pack.factBoundaries),
     "",
     "## Risk reminders",
-    bullet(pack.riskReminders),
-    "",
-    "文档只保留素材与草稿骨架；OpenClaw prompt 会通过飞书私信单独发送。"
+    bullet(pack.riskReminders)
   ].join("\n");
 }

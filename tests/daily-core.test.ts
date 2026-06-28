@@ -97,7 +97,7 @@ describe("runDailyCore", () => {
     );
   });
 
-  it("saves local outputs before Feishu delivery and returns a degraded package when DM fails", async () => {
+  it("saves local outputs before Feishu delivery and does not send daily-core DMs", async () => {
     const root = await mkdtemp(join(tmpdir(), "daily-core-"));
     await mkdir(join(root, "config"));
     await writeFile(join(root, ".env"), "FEISHU_APP_ID=cli_test\nFEISHU_APP_SECRET=secret_test\n");
@@ -130,7 +130,7 @@ describe("runDailyCore", () => {
 
     const deliveryChecks: Array<{ step: "appendMarkdown" | "sendText"; markdownExists: boolean; jsonExists: boolean }> = [];
     let appendedMarkdown = "";
-    const dmTexts: string[] = [];
+    let sendTextCalls = 0;
 
     const pack = await runDailyCore({
       rootDir: root,
@@ -157,40 +157,38 @@ describe("runDailyCore", () => {
           return { ok: true, docToken: "material_doc", url: "https://my.feishu.cn/docx/material_doc" };
         },
         sendText: async (_openId, text) => {
-          dmTexts.push(text);
+          sendTextCalls += 1;
           deliveryChecks.push({
             step: "sendText",
             markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.md")),
             jsonExists: await fileExists(join(root, "custom-runs", "2026-06-28", "core.json"))
           });
-          return { ok: false, error: "DM unavailable" };
+          return { ok: false, error: `unexpected DM: ${text}` };
         }
       }
     });
 
     expect(pack.selectedEvents).toHaveLength(1);
     expect(pack.feishuWriteResult?.ok).toBe(true);
-    expect(pack.dmResult?.ok).toBe(false);
+    expect(pack.dmResult).toBeUndefined();
+    expect(pack.openClawPromptDmResult).toBeUndefined();
+    expect(pack.status).toBe("ok");
+    expect(sendTextCalls).toBe(0);
     expect(deliveryChecks).toEqual([
-      { step: "appendMarkdown", markdownExists: true, jsonExists: true },
-      { step: "sendText", markdownExists: true, jsonExists: true },
-      { step: "sendText", markdownExists: true, jsonExists: true }
+      { step: "appendMarkdown", markdownExists: true, jsonExists: true }
     ]);
     expect(appendedMarkdown).not.toContain("Generation prompt");
     expect(appendedMarkdown).not.toContain("Create a concise Web3 brief");
-    expect(dmTexts[0]).toContain("Web3 core material package");
-    expect(dmTexts[1]).toContain("OpenClaw prompt");
-    expect(dmTexts[1]).toContain("Create a concise Web3 brief");
     expect(await readFile(join(root, "custom-runs", "2026-06-28", "core.md"), "utf8")).toContain(
       "# 6月28日 Web3 素材库 | Core Material Pack"
     );
     const savedJson = JSON.parse(await readFile(join(root, "custom-runs", "2026-06-28", "core.json"), "utf8"));
     expect(savedJson.runId).toContain("core-2026-06-28");
     expect(savedJson.feishuWriteResult).toMatchObject({ ok: true, docToken: "material_doc" });
-    expect(savedJson.dmResult).toMatchObject({ ok: false, error: "DM unavailable" });
+    expect(savedJson.dmResult).toBeUndefined();
   });
 
-  it("sends a degraded DM when the material document write fails", async () => {
+  it("records degraded status when the material document write fails without sending a DM", async () => {
     const root = await mkdtemp(join(tmpdir(), "daily-core-doc-failed-"));
     await mkdir(join(root, "config"));
     await writeFile(join(root, ".env"), "FEISHU_APP_ID=cli_test\nFEISHU_APP_SECRET=secret_test\n");
@@ -221,7 +219,7 @@ describe("runDailyCore", () => {
       })
     );
 
-    let dmText = "";
+    let sendTextCalls = 0;
 
     const pack = await runDailyCore({
       rootDir: root,
@@ -240,17 +238,17 @@ describe("runDailyCore", () => {
       feishuClient: {
         appendMarkdown: async () => ({ ok: false, docToken: "material_doc", error: "doc failed" }),
         sendText: async (_openId, text) => {
-          dmText = text;
+          sendTextCalls += 1;
           return { ok: true, messageId: "msg_123" };
         }
       }
     });
 
     expect(pack.feishuWriteResult).toMatchObject({ ok: false, docToken: "material_doc", error: "doc failed" });
-    expect(dmText).toContain("degraded");
-    expect(dmText).toContain("doc failed");
-    expect(dmText).not.toContain("package ready");
-    expect(dmText).not.toContain("Doc: material_doc");
+    expect(pack.status).toBe("degraded");
+    expect(pack.dmResult).toBeUndefined();
+    expect(pack.openClawPromptDmResult).toBeUndefined();
+    expect(sendTextCalls).toBe(0);
   });
 });
 
