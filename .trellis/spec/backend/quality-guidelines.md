@@ -42,8 +42,21 @@ Required behavior:
 
 - Small Markdown payloads may use a single request.
 - Payloads over 50 non-empty lines must be split into `[50, 50, ...]` sized batches.
+- When inserting new Markdown at the top of a Feishu doc, send chunked batches in reverse order with `index: 0` so the final document reads in the original line order.
 - If any batch returns a non-zero Feishu response code, return the structured document write failure immediately.
 - Unit tests must cover both the single-request path and the multi-request chunking path.
+
+### Feishu document writes must keep newest runs first
+
+Generated packages are chronological logs. Successful Feishu docx writes must insert the newest run at the top of the root document block with `data.index: 0`, not append to the bottom.
+
+Why: Mia reads the three target docs as inbox-style work queues; newest daily material should be visible first without scrolling.
+
+Required behavior:
+
+- The core material document, Xiaohongshu draft document, and X draft document all use the same `appendMarkdown` top-insert behavior.
+- Multi-batch writes must preserve the package's internal reading order after insertion.
+- Unit tests must assert `index: 0` and cover multi-batch ordering.
 
 ### Feishu document links must be browser-openable
 

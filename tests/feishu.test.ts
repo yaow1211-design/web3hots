@@ -41,6 +41,7 @@ describe("createFeishuClient", () => {
       url: "https://my.feishu.cn/docx/doc_token"
     });
     expect(calls[0]).toContain("children");
+    expect(calls[0]).toContain("\"index\":0");
   });
 
   it("appends multiline markdown in a single documentBlockChildren.create request", async () => {
@@ -69,6 +70,7 @@ describe("createFeishuClient", () => {
     expect(calls[0]).toEqual({
       path: { document_id: "doc_token", block_id: "doc_token" },
       data: {
+        index: 0,
         children: [
           { block_type: 2, text: { elements: [{ text_run: { content: "# Title" } }] } },
           { block_type: 2, text: { elements: [{ text_run: { content: "- Item" } }] } }
@@ -79,11 +81,26 @@ describe("createFeishuClient", () => {
 
   it("chunks large markdown appends to stay within Feishu block creation limits", async () => {
     const calls: unknown[] = [];
+    let documentChildren: Array<{
+      text: { elements: Array<{ text_run: { content: string } }> };
+    }> = [];
     const sdkClient = {
       docx: {
         documentBlockChildren: {
-          create: async (args: unknown) => {
+          create: async (args: {
+            data: {
+              index?: number;
+              children: Array<{
+                text: { elements: Array<{ text_run: { content: string } }> };
+              }>;
+            };
+          }) => {
             calls.push(args);
+            if (args.data.index === 0) {
+              documentChildren = [...args.data.children, ...documentChildren];
+            } else {
+              documentChildren = [...documentChildren, ...args.data.children];
+            }
             return { code: 0, data: { children: [{ block_id: `block${calls.length}` }] } };
           }
         }
@@ -101,7 +118,11 @@ describe("createFeishuClient", () => {
 
     expect(result.ok).toBe(true);
     expect(calls).toHaveLength(3);
-    expect(calls.map((call) => (call as { data: { children: unknown[] } }).data.children.length)).toEqual([50, 50, 1]);
+    expect(calls.map((call) => (call as { data: { index?: number } }).data.index)).toEqual([0, 0, 0]);
+    expect(calls.map((call) => (call as { data: { children: unknown[] } }).data.children.length)).toEqual([1, 50, 50]);
+    expect(documentChildren.map((block) => block.text.elements[0].text_run.content)).toEqual(
+      Array.from({ length: 101 }, (_, index) => `Line ${index + 1}`)
+    );
   });
 
   it("returns structured errors for document and DM failures", async () => {

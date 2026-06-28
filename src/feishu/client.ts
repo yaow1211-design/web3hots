@@ -47,10 +47,12 @@ export function createFeishuClient(params: { appId: string; appSecret: string; c
       try {
         const blocks = markdownToPlainBlocks(markdown);
 
-        for (const blockChunk of chunkBlocks(blocks)) {
+        const blockChunks = chunkBlocks(blocks);
+
+        for (const blockChunk of [...blockChunks].reverse()) {
           const response = await client.docx.documentBlockChildren.create({
             path: { document_id: docToken, block_id: docToken },
-            data: { children: blockChunk }
+            data: { index: 0, children: blockChunk }
           });
 
           if (response.code !== 0) {
