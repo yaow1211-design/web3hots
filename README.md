@@ -36,7 +36,7 @@ FEISHU_APP_ID=cli_xxx
 FEISHU_APP_SECRET=replace_with_secret
 ```
 
-Edit `config/mia.json` only if document tokens or the Feishu open ID change.
+Replace every placeholder in `config/mia.json` with your real Feishu document tokens and `open_id` before running.
 
 ## Test
 

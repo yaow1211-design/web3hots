@@ -11,6 +11,13 @@ export interface BuildSocialPackParams {
 
 export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
   const selectedTopics = [...params.corePack.selectedEvents].sort((a, b) => b.contentPotentialScore - a.contentPotentialScore).slice(0, 2);
+
+  if (selectedTopics.length === 0) {
+    throw new Error(
+      `Core package for ${params.date} has no selected events. Re-run daily-core after enough events are selected.`
+    );
+  }
+
   const topicLines = selectedTopics.map((topic) => `${topic.title}: ${topic.summary}`).join("\n");
   const factBoundaries = selectedTopics.map((topic) => `Only claim what sources support for "${topic.title}".`);
 

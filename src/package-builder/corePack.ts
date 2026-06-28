@@ -51,6 +51,11 @@ export function renderCorePackMarkdown(pack: CorePack): string {
       ].join("\n")
     )
     .join("\n\n");
+  const deliveryStatus = pack.feishuWriteResult
+    ? pack.feishuWriteResult.ok
+      ? `Feishu delivery ready: ${pack.feishuWriteResult.url ?? pack.feishuWriteResult.docToken}`
+      : pack.feishuWriteResult.error ?? "Feishu delivery skipped."
+    : "Feishu delivery pending.";
 
   return [
     `# Web3 Core Material Pack | ${pack.date}`,
@@ -67,6 +72,9 @@ export function renderCorePackMarkdown(pack: CorePack): string {
     "",
     "## Market snapshot",
     pack.marketSnapshot.degraded ? `Degraded: ${pack.marketSnapshot.degradationReason}` : pack.marketSnapshot.trendSummary,
+    "",
+    "## Delivery status",
+    deliveryStatus,
     "",
     "## Selected events",
     selectedEvents || "No high-signal events selected.",

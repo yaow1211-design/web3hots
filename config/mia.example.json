@@ -1,8 +1,8 @@
 {
-  "materialDocToken": "YL53dqDP2oXU8UxsyHhc6V92nFb",
-  "xiaohongshuDocToken": "Cbnid6KOZovfahxyFiScweC8n0f",
-  "xDocToken": "MptYdeqpiofTVVxMGxNcewQSnZf",
-  "feishuOpenId": "ou_e3259678ea1de992eb276a7d080f081e",
+  "materialDocToken": "fill_in_material_doc_token",
+  "xiaohongshuDocToken": "fill_in_xiaohongshu_doc_token",
+  "xDocToken": "fill_in_x_doc_token",
+  "feishuOpenId": "fill_in_feishu_open_id",
   "priorityThemes": ["regulation", "infrastructure", "security", "marketStructure", "aiCrypto"],
   "styleConstraints": ["signal over noise", "separate facts from interpretation", "write for Mia's Web3 and AI opportunity lens"],
   "riskReminders": ["do not imply investment advice", "do not overstate short-term market signals", "mark weak data as degraded"]

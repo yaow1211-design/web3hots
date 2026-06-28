@@ -48,58 +48,64 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
   await appendLog(logPath, `daily-social-pack started runDate=${date}`);
 
   try {
-    await access(paths.coreJson);
-  } catch {
-    throw new Error(`Missing core package for ${date}. Run daily-core first.`);
-  }
+    try {
+      await access(paths.coreJson);
+    } catch {
+      throw new Error(`Missing core package for ${date}. Run daily-core first.`);
+    }
 
-  const corePack = await readCorePack(paths.coreJson);
-  let pack = buildSocialPack({
-    runId: `social-${date}-${now.getTime()}`,
-    date,
-    corePack,
-    paths: {
-      markdownPath: paths.socialMarkdown,
-      jsonPath: paths.socialJson
-    },
-    mia: config.mia
-  });
-  const markdown = renderSocialPackMarkdown(pack);
-
-  // Local artifacts must exist before any Feishu delivery attempt.
-  await writeTextFile(paths.socialMarkdown, markdown);
-  await writeJsonFile(paths.socialJson, pack);
-
-  const feishu = params.feishuClient ??
-    createFeishuClient({
-      appId: config.env.FEISHU_APP_ID,
-      appSecret: config.env.FEISHU_APP_SECRET
-    });
-  const xiaohongshuResult = await feishu.appendMarkdown(config.mia.xiaohongshuDocToken, pack.xiaohongshuPrompt);
-  const xResult = await feishu.appendMarkdown(
-    config.mia.xDocToken,
-    [pack.chineseXPrompt, "", pack.englishXPrompt].join("\n")
-  );
-  const dmResult = await feishu.sendText(
-    config.mia.feishuOpenId,
-    formatDmText({
+    const corePack = await readCorePack(paths.coreJson);
+    let pack = buildSocialPack({
+      runId: `social-${date}-${now.getTime()}`,
       date,
-      selectedCount: pack.selectedTopics.length,
-      xiaohongshuTarget: xiaohongshuResult.url ?? config.mia.xiaohongshuDocToken,
-      xTarget: xResult.url ?? config.mia.xDocToken
-    })
-  );
+      corePack,
+      paths: {
+        markdownPath: paths.socialMarkdown,
+        jsonPath: paths.socialJson
+      },
+      mia: config.mia
+    });
+    const markdown = renderSocialPackMarkdown(pack);
 
-  pack = {
-    ...pack,
-    feishuWriteResults: [xiaohongshuResult, xResult],
-    dmResult
-  };
-  await writeJsonFile(paths.socialJson, pack);
-  await appendLog(
-    logPath,
-    `daily-social-pack finished status=${xiaohongshuResult.ok && xResult.ok && dmResult.ok ? "ok" : "degraded"}`
-  );
+    // Local artifacts must exist before any Feishu delivery attempt.
+    await writeTextFile(paths.socialMarkdown, markdown);
+    await writeJsonFile(paths.socialJson, pack);
 
-  return pack;
+    const feishu = params.feishuClient ??
+      createFeishuClient({
+        appId: config.env.FEISHU_APP_ID,
+        appSecret: config.env.FEISHU_APP_SECRET
+      });
+    const xiaohongshuResult = await feishu.appendMarkdown(config.mia.xiaohongshuDocToken, pack.xiaohongshuPrompt);
+    const xResult = await feishu.appendMarkdown(
+      config.mia.xDocToken,
+      [pack.chineseXPrompt, "", pack.englishXPrompt].join("\n")
+    );
+    const dmResult = await feishu.sendText(
+      config.mia.feishuOpenId,
+      formatDmText({
+        date,
+        selectedCount: pack.selectedTopics.length,
+        xiaohongshuTarget: xiaohongshuResult.url ?? config.mia.xiaohongshuDocToken,
+        xTarget: xResult.url ?? config.mia.xDocToken
+      })
+    );
+
+    pack = {
+      ...pack,
+      feishuWriteResults: [xiaohongshuResult, xResult],
+      dmResult
+    };
+    await writeJsonFile(paths.socialJson, pack);
+    await appendLog(
+      logPath,
+      `daily-social-pack finished status=${xiaohongshuResult.ok && xResult.ok && dmResult.ok ? "ok" : "degraded"}`
+    );
+
+    return pack;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await appendLog(logPath, `daily-social-pack finished status=failed reason="${message}"`);
+    throw error;
+  }
 }

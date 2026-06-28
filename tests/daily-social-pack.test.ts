@@ -48,6 +48,45 @@ describe("runDailySocialPack", () => {
     })).rejects.toThrow("Missing core package for 2026-06-28. Run daily-core first.");
   });
 
+  it("fails clearly when the saved core pack has no selected events and never calls Feishu", async () => {
+    const root = await mkdtemp(join(tmpdir(), "daily-social-empty-"));
+    await writeConfig(root);
+    const coreJson = join(root, "custom-runs", "2026-06-28", "core.json");
+
+    await writeJsonFile(coreJson, {
+      runId: "core-2026-06-28",
+      date: "2026-06-28",
+      window: "24h",
+      sourceHealth: [],
+      selectedEvents: [],
+      marketSnapshot: { trendSummary: "degraded", sources: [], degraded: true, fetchedAt: "2026-06-28T02:00:00.000Z" },
+      generationPrompt: "prompt",
+      markdownPath: join(root, "custom-runs", "2026-06-28", "core.md"),
+      jsonPath: coreJson
+    });
+
+    let appendMarkdownCalls = 0;
+    let sendTextCalls = 0;
+
+    await expect(runDailySocialPack({
+      rootDir: root,
+      now: new Date("2026-06-27T16:30:00.000Z"),
+      feishuClient: {
+        appendMarkdown: async () => {
+          appendMarkdownCalls += 1;
+          return { ok: true, docToken: "x" };
+        },
+        sendText: async () => {
+          sendTextCalls += 1;
+          return { ok: true };
+        }
+      }
+    })).rejects.toThrow("Core package for 2026-06-28 has no selected events. Re-run daily-core after enough events are selected.");
+
+    expect(appendMarkdownCalls).toBe(0);
+    expect(sendTextCalls).toBe(0);
+  });
+
   it("builds from saved core pack, saves local outputs before Feishu delivery, and rewrites JSON with delivery results", async () => {
     const root = await mkdtemp(join(tmpdir(), "daily-social-"));
     await writeConfig(root);

@@ -1,6 +1,8 @@
 import type { SourceConfig, SourceItem } from "../domain/types.js";
 import { parseRssItems } from "./rss.js";
 
+export const DEFAULT_SOURCE_FETCH_TIMEOUT_MS = 10_000;
+
 export interface FetchSourcesResult {
   items: SourceItem[];
   health: Array<{ source: string; ok: boolean; itemCount: number; error?: string }>;
@@ -22,7 +24,21 @@ export async function fetchFixedSources(params: {
     }
 
     try {
-      const response = await fetchImpl(source.url);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), DEFAULT_SOURCE_FETCH_TIMEOUT_MS);
+      let response: Response;
+
+      try {
+        response = await fetchImpl(source.url, { signal: controller.signal });
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new Error(`Source ${source.id} timed out after ${DEFAULT_SOURCE_FETCH_TIMEOUT_MS}ms`);
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
       if (!response.ok) {
         health.push({ source: source.id, ok: false, itemCount: 0, error: `HTTP ${response.status}` });
         continue;

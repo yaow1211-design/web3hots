@@ -22,6 +22,10 @@ export interface RunDailyCoreParams {
   feishuClient?: FeishuClient;
 }
 
+function belowSelectionMinMessage(selectedCount: number, min: number): string {
+  return `selected events ${selectedCount} below selection.min ${min}`;
+}
+
 function dateKey(now: Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone: timezone,
@@ -63,6 +67,7 @@ export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<Cor
   const deduped = dedupeCandidates(normalized);
   const scored = scoreCandidates(deduped, config.defaultConfig);
   const selectedEvents = selectEvents(scored, config.defaultConfig.selection.target);
+  const selectionMin = config.defaultConfig.selection.min;
   const marketSnapshot = await (params.fetchMarket ?? fetchMarketSnapshot)({
     apis: config.defaultConfig.marketApis,
     now
@@ -79,11 +84,33 @@ export async function runDailyCore(params: RunDailyCoreParams = {}): Promise<Cor
     mia: config.mia
   });
 
+  if (selectedEvents.length < selectionMin) {
+    const reason = belowSelectionMinMessage(selectedEvents.length, selectionMin);
+
+    pack = {
+      ...pack,
+      feishuWriteResult: {
+        ok: false,
+        docToken: config.mia.materialDocToken,
+        error: `Feishu delivery skipped: ${reason}.`
+      },
+      dmResult: {
+        ok: false,
+        error: `Feishu delivery skipped: ${reason}.`
+      }
+    };
+  }
+
   const markdown = renderCorePackMarkdown(pack);
 
   // Local artifacts must exist before any Feishu delivery attempt.
   await writeTextFile(paths.coreMarkdown, markdown);
   await writeJsonFile(paths.coreJson, pack);
+
+  if (selectedEvents.length < selectionMin) {
+    await appendLog(logPath, `daily-core finished status=failed reason="${belowSelectionMinMessage(selectedEvents.length, selectionMin)}"`);
+    return pack;
+  }
 
   const feishu = params.feishuClient ??
     createFeishuClient({
