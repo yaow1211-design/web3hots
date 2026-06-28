@@ -5,6 +5,23 @@ export const envSchema = z.object({
   FEISHU_APP_SECRET: z.string().min(1)
 });
 
+const storageConfigSchema = z.object({
+  provider: z.literal("local"),
+  freePlan: z.literal("supabase"),
+  supabase: z.object({
+    enabled: z.custom<false>((enabled) => enabled === false, {
+      message: "storage.supabase.enabled must stay false until cloud persistence is implemented"
+    }),
+    projectUrlEnv: z.literal("SUPABASE_URL"),
+    serviceRoleKeyEnv: z.literal("SUPABASE_SERVICE_ROLE_KEY"),
+    bucket: z.string().min(1),
+    tables: z.object({
+      coreRuns: z.string().min(1),
+      socialRuns: z.string().min(1)
+    })
+  })
+});
+
 export const defaultConfigSchema = z.object({
   timezone: z.literal("Asia/Shanghai"),
   defaultWindowHours: z.number().int().positive(),
@@ -26,6 +43,7 @@ export const defaultConfigSchema = z.object({
     enabled: z.boolean(),
     timeoutMs: z.number().int().positive()
   })),
+  storage: storageConfigSchema,
   themeWeights: z.object({
     regulation: z.number().positive(),
     infrastructure: z.number().positive(),

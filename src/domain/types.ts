@@ -15,6 +15,21 @@ export interface MarketApiConfig {
   timeoutMs: number;
 }
 
+export interface StorageConfig {
+  provider: "local";
+  freePlan: "supabase";
+  supabase: {
+    enabled: false;
+    projectUrlEnv: "SUPABASE_URL";
+    serviceRoleKeyEnv: "SUPABASE_SERVICE_ROLE_KEY";
+    bucket: string;
+    tables: {
+      coreRuns: string;
+      socialRuns: string;
+    };
+  };
+}
+
 export interface DefaultConfig {
   timezone: string;
   defaultWindowHours: number;
@@ -23,6 +38,7 @@ export interface DefaultConfig {
   selection: { min: number; target: number };
   sources: SourceConfig[];
   marketApis: MarketApiConfig[];
+  storage: StorageConfig;
   themeWeights: Record<Exclude<Theme, "other">, number>;
 }
 

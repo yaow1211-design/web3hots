@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { runDailySocialPack } from "../src/runner/dailySocialPack.js";
 import { writeJsonFile } from "../src/state/runStore.js";
+import { storageConfig } from "./fixtures/default-config.js";
 
 const configDefault = {
   timezone: "Asia/Shanghai",
@@ -13,6 +14,7 @@ const configDefault = {
   selection: { min: 1, target: 3 },
   sources: [],
   marketApis: [],
+  storage: storageConfig(),
   themeWeights: { regulation: 1.2, infrastructure: 1.1, security: 1.2, marketStructure: 1, aiCrypto: 1.1 }
 };
 

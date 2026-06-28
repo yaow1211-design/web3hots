@@ -34,9 +34,19 @@ Edit `.env`:
 ```dotenv
 FEISHU_APP_ID=cli_xxx
 FEISHU_APP_SECRET=replace_with_secret
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
 Replace every placeholder in `config/mia.json` with your real Feishu document tokens and `open_id` before running.
+
+## Free database/storage option: Supabase
+
+The bot still uses local files by default. `config/default.json` sets `storage.provider` to `local`, and `storage.supabase.enabled` is `false`, so normal runs do not connect to Supabase or write anything there.
+
+The Supabase settings are only a reserved configuration shape for a future cloud persistence step. The free-plan target is documented in config now so the later storage implementation has stable bucket and table names to build against.
+
+Keep `SUPABASE_SERVICE_ROLE_KEY` only in your local `.env`. Never commit a real service role key, because it can bypass row-level security and write directly to your Supabase project.
 
 ## Test
 
