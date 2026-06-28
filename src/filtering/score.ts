@@ -1,7 +1,7 @@
 import type { CandidateEvent, DefaultConfig, ScoredEvent } from "../domain/types.js";
 
 function hasPricePrediction(event: CandidateEvent): boolean {
-  return /(price|target|analyst|trader|may reach|this week)/i.test(`${event.title} ${event.summary}`);
+  return /(price|target|analyst|trader|may reach)/i.test(`${event.title} ${event.summary}`);
 }
 
 function impactScore(event: CandidateEvent): number {

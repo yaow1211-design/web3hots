@@ -96,3 +96,47 @@ Result:
 
 - `tests/filtering.test.ts` passed with the new same-source duplicate assertion.
 - TypeScript typecheck passed with no errors.
+
+# Fix Report: Narrow Price Prediction Rejection
+
+Date: 2026-06-28
+
+## Scope
+
+Narrowed the price-prediction rejection rule so timing language by itself does not cause a rejection.
+
+Changed files:
+
+- `src/filtering/score.ts`
+- `tests/filtering.test.ts`
+
+## RED Evidence
+
+Command:
+
+```bash
+npm test -- tests/filtering.test.ts
+```
+
+Result:
+
+- Failed on the new timing-only regression assertion.
+- Failure message:
+
+```text
+expected 'low-signal price prediction' to be undefined
+```
+
+## GREEN Evidence
+
+Commands:
+
+```bash
+npm test -- tests/filtering.test.ts
+npm run typecheck
+```
+
+Result:
+
+- `tests/filtering.test.ts` passed after removing timing-only rejection.
+- TypeScript typecheck passed with no errors.

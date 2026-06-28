@@ -73,4 +73,26 @@ describe("filtering pipeline", () => {
     expect(scored[0].sources).toHaveLength(2);
     expect(scored[0].contentPotentialScore).toBe(0.65);
   });
+
+  it("does not reject a legitimate structural event that only mentions timing", () => {
+    const timingEvent = [
+      {
+        id: "cointelegraph:timing",
+        source: "cointelegraph",
+        sourceType: "rss" as const,
+        title: "SEC guidance update expected this week",
+        canonicalUrl: "https://cointelegraph.com/news/sec-guidance-update-this-week",
+        sources: [{ source: "cointelegraph", url: "https://cointelegraph.com/news/sec-guidance-update-this-week", publishedAt: "2026-06-28T00:30:00.000Z" }],
+        publishedAt: "2026-06-28T00:30:00.000Z",
+        summary: "The regulator is expected to publish custody guidance this week.",
+        theme: "regulation" as const,
+        isDuplicate: false,
+        initialReason: "within configured time window"
+      }
+    ];
+
+    const scored = scoreCandidates(timingEvent, config);
+
+    expect(scored[0].rejectionReason).toBeUndefined();
+  });
 });
