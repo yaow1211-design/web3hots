@@ -121,7 +121,7 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
     const xiaohongshuResult = await feishu.appendMarkdown(config.mia.xiaohongshuDocToken, pack.xiaohongshuPrompt);
     const xResult = await feishu.appendMarkdown(
       config.mia.xDocToken,
-      [pack.chineseXPrompt, "", pack.englishXPrompt].join("\n")
+      [pack.englishXPrompt, "", pack.chineseXPrompt].join("\n")
     );
     const dmResult = await feishu.sendText(
       config.mia.feishuOpenId,

@@ -69,6 +69,7 @@ describe("package builders", () => {
     const markdown = renderCorePackMarkdown(pack);
 
     expect(markdown).toContain("# Web3 Core Material Pack | 2026-06-28");
+    expect(markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
     expect(markdown).toContain("SEC issues new stablecoin custody guidance");
     expect(markdown).toContain("Mia angle");
     expect(markdown).toContain("Generation prompt");
@@ -123,15 +124,20 @@ describe("package builders", () => {
     expect(social.xiaohongshuPrompt).toContain("Highest-potential market structure update: A trader says Bitcoin may reach a new target.");
     expect(social.chineseXPrompt).toContain("Highest-potential market structure update: A trader says Bitcoin may reach a new target.");
     expect(social.englishXPrompt).toContain("Highest-potential market structure update: A trader says Bitcoin may reach a new target.");
+    expect(social.xiaohongshuPrompt.startsWith("Date: 2026-06-28\n日期: 2026-06-28")).toBe(true);
+    expect(social.chineseXPrompt.startsWith("Date: 2026-06-28\n日期: 2026-06-28")).toBe(true);
+    expect(social.englishXPrompt.startsWith("Date: 2026-06-28\n日期: 2026-06-28")).toBe(true);
     expect(social.xiaohongshuPrompt).toContain("小红书");
     expect(social.chineseXPrompt).toContain("中文 X thread");
     expect(social.englishXPrompt).toContain("English X thread");
     expect(social.xiaohongshuPrompt).toContain("Do not produce final publishable copy.");
     expect(social.chineseXPrompt).toContain("Do not produce final publishable copy.");
     expect(social.englishXPrompt).toContain("Do not produce final publishable copy.");
+    expect(markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
     expect(markdown).toContain("## Topic 1: Highest-potential market structure update");
     expect(markdown).toContain("Summary: A trader says Bitcoin may reach a new target.");
     expect(markdown).toContain("Sources: [cointelegraph](https://cointelegraph.com/news/bitcoin-price-target)");
+    expect(markdown.indexOf("## English X prompt")).toBeLessThan(markdown.indexOf("## Chinese X prompt"));
     expect(markdown).toContain("not final publishable copy");
   });
 });

@@ -192,12 +192,14 @@ describe("runDailySocialPack", () => {
     });
 
     const deliveryChecks: Array<{ step: string; markdownExists: boolean; jsonExists: boolean }> = [];
+    const appendedMarkdown: Array<{ docToken: string; markdown: string }> = [];
 
     const pack = await runDailySocialPack({
       rootDir: root,
       now: new Date("2026-06-27T16:30:00.000Z"),
       feishuClient: {
-        appendMarkdown: async (docToken) => {
+        appendMarkdown: async (docToken, markdown) => {
+          appendedMarkdown.push({ docToken, markdown });
           deliveryChecks.push({
             step: `append:${docToken}`,
             markdownExists: await fileExists(join(root, "custom-runs", "2026-06-28", "social-pack.md")),
@@ -224,6 +226,13 @@ describe("runDailySocialPack", () => {
       { step: "append:x_doc", markdownExists: true, jsonExists: true },
       { step: "sendText", markdownExists: true, jsonExists: true }
     ]);
+    expect(appendedMarkdown[0]).toMatchObject({ docToken: "xhs_doc" });
+    expect(appendedMarkdown[0].markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
+    expect(appendedMarkdown[1]).toMatchObject({ docToken: "x_doc" });
+    expect(appendedMarkdown[1].markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
+    expect(appendedMarkdown[1].markdown.indexOf("English X thread")).toBeLessThan(
+      appendedMarkdown[1].markdown.indexOf("中文 X thread")
+    );
     expect(await readFile(join(root, "custom-runs", "2026-06-28", "social-pack.md"), "utf8")).toContain("# Social Package | 2026-06-28");
 
     const savedJson = JSON.parse(await readFile(join(root, "custom-runs", "2026-06-28", "social-pack.json"), "utf8"));

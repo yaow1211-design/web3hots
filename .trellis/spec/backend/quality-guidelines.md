@@ -58,6 +58,22 @@ Required behavior:
 - Multi-batch writes must preserve the package's internal reading order after insertion.
 - Unit tests must assert `index: 0` and cover multi-batch ordering.
 
+### Daily Feishu updates must show bilingual dates
+
+Every daily update written to Feishu must include the run date near the top of the written content. Use the English date label first and the Chinese label second:
+
+```text
+Date: YYYY-MM-DD
+日期: YYYY-MM-DD
+```
+
+Required behavior:
+
+- Core material Markdown must include the bilingual date lines near the top.
+- Xiaohongshu prompt content must include the bilingual date lines because it is written directly to its own Feishu doc.
+- X prompt content must include the bilingual date lines and write the English X prompt before the Chinese X prompt.
+- Unit tests must cover both the rendered local Markdown and the actual strings passed to Feishu delivery.
+
 ### Feishu document links must be browser-openable
 
 When returning a document link to the user after a successful Feishu docx write, build the URL with `https://my.feishu.cn/docx/<doc_token>`.

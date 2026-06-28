@@ -1,5 +1,5 @@
 import type { CorePack, MarketSnapshot, MiaConfig, ScoredEvent } from "../domain/types.js";
-import { bullet, sourceLinks } from "./markdown.js";
+import { bilingualDateLines, bullet, sourceLinks } from "./markdown.js";
 
 export interface BuildCorePackParams {
   runId: string;
@@ -59,6 +59,8 @@ export function renderCorePackMarkdown(pack: CorePack): string {
 
   return [
     `# Web3 Core Material Pack | ${pack.date}`,
+    "",
+    ...bilingualDateLines(pack.date),
     "",
     `Window: ${pack.window}`,
     `Run ID: ${pack.runId}`,
