@@ -77,6 +77,33 @@ describe("createFeishuClient", () => {
     });
   });
 
+  it("chunks large markdown appends to stay within Feishu block creation limits", async () => {
+    const calls: unknown[] = [];
+    const sdkClient = {
+      docx: {
+        documentBlockChildren: {
+          create: async (args: unknown) => {
+            calls.push(args);
+            return { code: 0, data: { children: [{ block_id: `block${calls.length}` }] } };
+          }
+        }
+      },
+      im: {
+        message: {
+          create: async () => ({ code: 0, data: { message_id: "msg1" } })
+        }
+      }
+    };
+    const markdown = Array.from({ length: 101 }, (_, index) => `Line ${index + 1}`).join("\n");
+
+    const client = createFeishuClient({ appId: "cli", appSecret: "secret", client: sdkClient });
+    const result = await client.appendMarkdown("doc_token", markdown);
+
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(3);
+    expect(calls.map((call) => (call as { data: { children: unknown[] } }).data.children.length)).toEqual([50, 50, 1]);
+  });
+
   it("returns structured errors for document and DM failures", async () => {
     const sdkClient = {
       docx: {

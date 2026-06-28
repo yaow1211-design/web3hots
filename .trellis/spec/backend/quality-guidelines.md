@@ -32,7 +32,18 @@ Questions to answer:
 
 <!-- Patterns that must always be used -->
 
-(To be filled by the team)
+### Feishu document writes must be chunked
+
+When writing generated Markdown to Feishu docx blocks, convert Markdown lines to plain text blocks and send at most 50 blocks per `documentBlockChildren.create` request.
+
+Why: live Feishu docx writes reject large `children` arrays with `field validation failed` even when the same document token, app credentials, and a one-block diagnostic write succeed.
+
+Required behavior:
+
+- Small Markdown payloads may use a single request.
+- Payloads over 50 non-empty lines must be split into `[50, 50, ...]` sized batches.
+- If any batch returns a non-zero Feishu response code, return the structured document write failure immediately.
+- Unit tests must cover both the single-request path and the multi-request chunking path.
 
 ---
 

@@ -15,6 +15,8 @@ type FeishuSdkClient = {
   };
 };
 
+const FEISHU_BLOCK_CREATE_BATCH_SIZE = 50;
+
 export interface FeishuClient {
   appendMarkdown(docToken: string, markdown: string): Promise<FeishuWriteResult>;
   sendText(openId: string, text: string): Promise<FeishuDmResult>;
@@ -22,6 +24,14 @@ export interface FeishuClient {
 
 function failureMessage(response: { code: number; msg?: string }, fallback: string): string {
   return `${response.msg ?? fallback} (code: ${response.code})`;
+}
+
+function chunkBlocks<T>(blocks: T[]): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < blocks.length; index += FEISHU_BLOCK_CREATE_BATCH_SIZE) {
+    chunks.push(blocks.slice(index, index + FEISHU_BLOCK_CREATE_BATCH_SIZE));
+  }
+  return chunks;
 }
 
 export function createFeishuClient(params: { appId: string; appSecret: string; client?: unknown }): FeishuClient {
@@ -37,13 +47,15 @@ export function createFeishuClient(params: { appId: string; appSecret: string; c
       try {
         const blocks = markdownToPlainBlocks(markdown);
 
-        const response = await client.docx.documentBlockChildren.create({
-          path: { document_id: docToken, block_id: docToken },
-          data: { children: blocks }
-        });
+        for (const blockChunk of chunkBlocks(blocks)) {
+          const response = await client.docx.documentBlockChildren.create({
+            path: { document_id: docToken, block_id: docToken },
+            data: { children: blockChunk }
+          });
 
-        if (response.code !== 0) {
-          return { ok: false, docToken, error: failureMessage(response, "Feishu doc write failed") };
+          if (response.code !== 0) {
+            return { ok: false, docToken, error: failureMessage(response, "Feishu doc write failed") };
+          }
         }
 
         return {
