@@ -3,11 +3,12 @@ import { createFeishuClient } from "../src/feishu/client.js";
 import { markdownToPlainBlocks } from "../src/feishu/markdownToFeishu.js";
 
 describe("markdownToPlainBlocks", () => {
-  it("converts markdown lines into safe text blocks", () => {
-    const blocks = markdownToPlainBlocks("# Title\n\n- Item");
+  it("converts markdown headings and text into Feishu blocks", () => {
+    const blocks = markdownToPlainBlocks("# 6月28日 小红书草稿 | Web3 早报角度\n\n## English\n\n- Item");
 
     expect(blocks).toEqual([
-      { block_type: 2, text: { elements: [{ text_run: { content: "# Title" } }] } },
+      { block_type: 3, heading1: { elements: [{ text_run: { content: "6月28日 小红书草稿 | Web3 早报角度" } }] } },
+      { block_type: 4, heading2: { elements: [{ text_run: { content: "English" } }] } },
       { block_type: 2, text: { elements: [{ text_run: { content: "- Item" } }] } }
     ]);
   });
@@ -72,7 +73,7 @@ describe("createFeishuClient", () => {
       data: {
         index: 0,
         children: [
-          { block_type: 2, text: { elements: [{ text_run: { content: "# Title" } }] } },
+          { block_type: 3, heading1: { elements: [{ text_run: { content: "Title" } }] } },
           { block_type: 2, text: { elements: [{ text_run: { content: "- Item" } }] } }
         ]
       }
@@ -82,7 +83,7 @@ describe("createFeishuClient", () => {
   it("chunks large markdown appends to stay within Feishu block creation limits", async () => {
     const calls: unknown[] = [];
     let documentChildren: Array<{
-      text: { elements: Array<{ text_run: { content: string } }> };
+      text?: { elements: Array<{ text_run: { content: string } }> };
     }> = [];
     const sdkClient = {
       docx: {
@@ -91,7 +92,7 @@ describe("createFeishuClient", () => {
             data: {
               index?: number;
               children: Array<{
-                text: { elements: Array<{ text_run: { content: string } }> };
+                text?: { elements: Array<{ text_run: { content: string } }> };
               }>;
             };
           }) => {
@@ -120,7 +121,7 @@ describe("createFeishuClient", () => {
     expect(calls).toHaveLength(3);
     expect(calls.map((call) => (call as { data: { index?: number } }).data.index)).toEqual([0, 0, 0]);
     expect(calls.map((call) => (call as { data: { children: unknown[] } }).data.children.length)).toEqual([1, 50, 50]);
-    expect(documentChildren.map((block) => block.text.elements[0].text_run.content)).toEqual(
+    expect(documentChildren.map((block) => block.text?.elements[0].text_run.content)).toEqual(
       Array.from({ length: 101 }, (_, index) => `Line ${index + 1}`)
     );
   });

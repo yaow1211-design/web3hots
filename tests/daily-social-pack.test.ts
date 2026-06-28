@@ -227,13 +227,16 @@ describe("runDailySocialPack", () => {
       { step: "sendText", markdownExists: true, jsonExists: true }
     ]);
     expect(appendedMarkdown[0]).toMatchObject({ docToken: "xhs_doc" });
-    expect(appendedMarkdown[0].markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
+    expect(appendedMarkdown[0].markdown).toContain("# 6月28日 小红书草稿 | Web3 早报角度");
+    expect(appendedMarkdown[0].markdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
+    expect(appendedMarkdown[0].markdown.indexOf("## English")).toBeLessThan(appendedMarkdown[0].markdown.indexOf("## 中文"));
     expect(appendedMarkdown[1]).toMatchObject({ docToken: "x_doc" });
-    expect(appendedMarkdown[1].markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
-    expect(appendedMarkdown[1].markdown.indexOf("English X thread")).toBeLessThan(
-      appendedMarkdown[1].markdown.indexOf("中文 X thread")
+    expect(appendedMarkdown[1].markdown).toContain("# 6月28日 X 草稿 | Web3 早报角度");
+    expect(appendedMarkdown[1].markdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
+    expect(appendedMarkdown[1].markdown.indexOf("## English X prompt")).toBeLessThan(appendedMarkdown[1].markdown.indexOf("## 中文 X prompt"));
+    expect(await readFile(join(root, "custom-runs", "2026-06-28", "social-pack.md"), "utf8")).toContain(
+      "# 6月28日 Social Package | Web3 早报角度"
     );
-    expect(await readFile(join(root, "custom-runs", "2026-06-28", "social-pack.md"), "utf8")).toContain("# Social Package | 2026-06-28");
 
     const savedJson = JSON.parse(await readFile(join(root, "custom-runs", "2026-06-28", "social-pack.json"), "utf8"));
     expect(savedJson.runId).toContain("social-2026-06-28");

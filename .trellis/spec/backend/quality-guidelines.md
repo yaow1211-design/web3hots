@@ -58,20 +58,24 @@ Required behavior:
 - Multi-batch writes must preserve the package's internal reading order after insertion.
 - Unit tests must assert `index: 0` and cover multi-batch ordering.
 
-### Daily Feishu updates must show bilingual dates
+### Daily Feishu updates must use titled bilingual headers
 
-Every daily update written to Feishu must include the run date near the top of the written content. Use the English date label first and the Chinese label second:
+Every daily update written to Feishu must start with a real Markdown heading that begins with the Chinese month/day form, like `# 6月28日 小红书草稿 | Web3 早报角度`.
+
+After the title, include the English date label first and the Chinese label second:
 
 ```text
-Date: YYYY-MM-DD
-日期: YYYY-MM-DD
+Date: June 28, 2026
+日期：2026年6月28日
 ```
 
 Required behavior:
 
-- Core material Markdown must include the bilingual date lines near the top.
-- Xiaohongshu prompt content must include the bilingual date lines because it is written directly to its own Feishu doc.
-- X prompt content must include the bilingual date lines and write the English X prompt before the Chinese X prompt.
+- Core material Markdown must start with a dated title such as `# 6月28日 Web3 素材库 | Core Material Pack`.
+- Xiaohongshu prompt content must start with a dated title and contain `## English` before `## 中文`, because it is written directly to its own Feishu doc.
+- X prompt delivery must start with a dated title and include `## English X prompt` before `## 中文 X prompt`.
+- Markdown `#` and `##` headings must be converted to Feishu heading blocks, not plain text blocks.
+- When top-inserting batches into Feishu with `index: 0`, send chunks in reverse chunk order but preserve the order within each chunk so the displayed document order matches the source Markdown.
 - Unit tests must cover both the rendered local Markdown and the actual strings passed to Feishu delivery.
 
 ### Feishu document links must be browser-openable

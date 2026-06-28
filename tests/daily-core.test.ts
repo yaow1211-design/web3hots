@@ -171,7 +171,9 @@ describe("runDailyCore", () => {
       { step: "appendMarkdown", markdownExists: true, jsonExists: true },
       { step: "sendText", markdownExists: true, jsonExists: true }
     ]);
-    expect(await readFile(join(root, "custom-runs", "2026-06-28", "core.md"), "utf8")).toContain("Web3 Core Material Pack");
+    expect(await readFile(join(root, "custom-runs", "2026-06-28", "core.md"), "utf8")).toContain(
+      "# 6月28日 Web3 素材库 | Core Material Pack"
+    );
     const savedJson = JSON.parse(await readFile(join(root, "custom-runs", "2026-06-28", "core.json"), "utf8"));
     expect(savedJson.runId).toContain("core-2026-06-28");
     expect(savedJson.feishuWriteResult).toMatchObject({ ok: true, docToken: "material_doc" });

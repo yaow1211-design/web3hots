@@ -1,5 +1,5 @@
 import type { CorePack, MiaConfig, SocialPack } from "../domain/types.js";
-import { bilingualDateLines, bullet, sourceLinks } from "./markdown.js";
+import { bullet, dailyUpdateHeader, sourceLinks } from "./markdown.js";
 
 export interface BuildSocialPackParams {
   runId: string;
@@ -27,24 +27,29 @@ export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
     sourceCoreRunId: params.corePack.runId,
     selectedTopics,
     xiaohongshuPrompt: [
-      ...bilingualDateLines(params.date),
+      ...dailyUpdateHeader(params.date, "小红书草稿 | Web3 早报角度"),
       "",
-      "Write a 小红书 draft that reframes the selected topic for a Chinese-speaking audience.",
+      "## English",
+      "Write a Xiaohongshu draft angle that reframes the selected topic for a Chinese-speaking audience.",
       topicLines,
       "Keep it practical, concise, and grounded in the facts from the core package.",
-      "Do not produce final publishable copy."
+      "Do not produce final publishable copy.",
+      "",
+      "## 中文",
+      "请写一个面向中文受众的小红书草稿角度。",
+      topicLines,
+      "保持实用、简洁，并严格基于核心素材包里的事实。",
+      "不要生成最终可发布正文。"
     ].join("\n"),
     chineseXPrompt: [
-      ...bilingualDateLines(params.date),
-      "",
+      "## 中文 X prompt",
       "Write a 中文 X thread draft based on the selected topic.",
       topicLines,
       "Keep it factual, readable, and suitable for a social-first summary.",
       "Do not produce final publishable copy."
     ].join("\n"),
     englishXPrompt: [
-      ...bilingualDateLines(params.date),
-      "",
+      "## English X prompt",
       "Write an English X thread draft based on the selected topic.",
       topicLines,
       "Keep it factual, readable, and suitable for a social-first summary.",
@@ -55,6 +60,16 @@ export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
     markdownPath: params.paths.markdownPath,
     jsonPath: params.paths.jsonPath
   };
+}
+
+export function renderXPromptMarkdown(pack: SocialPack): string {
+  return [
+    ...dailyUpdateHeader(pack.date, "X 草稿 | Web3 早报角度"),
+    "",
+    pack.englishXPrompt,
+    "",
+    pack.chineseXPrompt
+  ].join("\n");
 }
 
 export function renderSocialPackMarkdown(pack: SocialPack): string {
@@ -70,9 +85,7 @@ export function renderSocialPackMarkdown(pack: SocialPack): string {
     .join("\n\n");
 
   return [
-    `# Social Package | ${pack.date}`,
-    "",
-    ...bilingualDateLines(pack.date),
+    ...dailyUpdateHeader(pack.date, "Social Package | Web3 早报角度"),
     "",
     `Run ID: ${pack.runId}`,
     `Source core run ID: ${pack.sourceCoreRunId}`,
@@ -86,12 +99,7 @@ export function renderSocialPackMarkdown(pack: SocialPack): string {
     "",
     "## English X prompt",
     "```text",
-    pack.englishXPrompt,
-    "```",
-    "",
-    "## Chinese X prompt",
-    "```text",
-    pack.chineseXPrompt,
+    renderXPromptMarkdown(pack),
     "```",
     "",
     "## Boundaries",

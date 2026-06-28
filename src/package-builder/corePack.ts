@@ -1,5 +1,5 @@
 import type { CorePack, MarketSnapshot, MiaConfig, ScoredEvent } from "../domain/types.js";
-import { bilingualDateLines, bullet, sourceLinks } from "./markdown.js";
+import { bullet, dailyUpdateHeader, sourceLinks } from "./markdown.js";
 
 export interface BuildCorePackParams {
   runId: string;
@@ -58,9 +58,7 @@ export function renderCorePackMarkdown(pack: CorePack): string {
     : "Feishu delivery pending.";
 
   return [
-    `# Web3 Core Material Pack | ${pack.date}`,
-    "",
-    ...bilingualDateLines(pack.date),
+    ...dailyUpdateHeader(pack.date, "Web3 素材库 | Core Material Pack"),
     "",
     `Window: ${pack.window}`,
     `Run ID: ${pack.runId}`,

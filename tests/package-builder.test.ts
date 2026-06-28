@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { MiaConfig, ScoredEvent, SourceItem, Theme } from "../src/domain/types.js";
 import { buildCorePack, renderCorePackMarkdown } from "../src/package-builder/corePack.js";
-import { buildSocialPack, renderSocialPackMarkdown } from "../src/package-builder/socialPack.js";
+import { buildSocialPack, renderSocialPackMarkdown, renderXPromptMarkdown } from "../src/package-builder/socialPack.js";
 import { sourceItems } from "./fixtures/core-pack.js";
 
 const mia: MiaConfig = {
@@ -68,8 +68,8 @@ describe("package builders", () => {
 
     const markdown = renderCorePackMarkdown(pack);
 
-    expect(markdown).toContain("# Web3 Core Material Pack | 2026-06-28");
-    expect(markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
+    expect(markdown).toContain("# 6月28日 Web3 素材库 | Core Material Pack");
+    expect(markdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
     expect(markdown).toContain("SEC issues new stablecoin custody guidance");
     expect(markdown).toContain("Mia angle");
     expect(markdown).toContain("Generation prompt");
@@ -111,6 +111,7 @@ describe("package builders", () => {
     });
 
     const markdown = renderSocialPackMarkdown(social);
+    const xMarkdown = renderXPromptMarkdown(social);
 
     expect(social.selectedTopics).toHaveLength(2);
     expect(social.selectedTopics.map((topic) => topic.title)).toEqual([
@@ -124,20 +125,24 @@ describe("package builders", () => {
     expect(social.xiaohongshuPrompt).toContain("Highest-potential market structure update: A trader says Bitcoin may reach a new target.");
     expect(social.chineseXPrompt).toContain("Highest-potential market structure update: A trader says Bitcoin may reach a new target.");
     expect(social.englishXPrompt).toContain("Highest-potential market structure update: A trader says Bitcoin may reach a new target.");
-    expect(social.xiaohongshuPrompt.startsWith("Date: 2026-06-28\n日期: 2026-06-28")).toBe(true);
-    expect(social.chineseXPrompt.startsWith("Date: 2026-06-28\n日期: 2026-06-28")).toBe(true);
-    expect(social.englishXPrompt.startsWith("Date: 2026-06-28\n日期: 2026-06-28")).toBe(true);
+    expect(social.xiaohongshuPrompt).toContain("# 6月28日 小红书草稿 | Web3 早报角度");
+    expect(social.xiaohongshuPrompt).toContain("Date: June 28, 2026\n日期：2026年6月28日");
+    expect(social.xiaohongshuPrompt.indexOf("## English")).toBeLessThan(social.xiaohongshuPrompt.indexOf("## 中文"));
     expect(social.xiaohongshuPrompt).toContain("小红书");
     expect(social.chineseXPrompt).toContain("中文 X thread");
     expect(social.englishXPrompt).toContain("English X thread");
     expect(social.xiaohongshuPrompt).toContain("Do not produce final publishable copy.");
     expect(social.chineseXPrompt).toContain("Do not produce final publishable copy.");
     expect(social.englishXPrompt).toContain("Do not produce final publishable copy.");
-    expect(markdown).toContain("Date: 2026-06-28\n日期: 2026-06-28");
+    expect(markdown).toContain("# 6月28日 Social Package | Web3 早报角度");
+    expect(markdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
+    expect(xMarkdown).toContain("# 6月28日 X 草稿 | Web3 早报角度");
+    expect(xMarkdown).toContain("Date: June 28, 2026\n日期：2026年6月28日");
+    expect(xMarkdown.indexOf("## English X prompt")).toBeLessThan(xMarkdown.indexOf("## 中文 X prompt"));
     expect(markdown).toContain("## Topic 1: Highest-potential market structure update");
     expect(markdown).toContain("Summary: A trader says Bitcoin may reach a new target.");
     expect(markdown).toContain("Sources: [cointelegraph](https://cointelegraph.com/news/bitcoin-price-target)");
-    expect(markdown.indexOf("## English X prompt")).toBeLessThan(markdown.indexOf("## Chinese X prompt"));
+    expect(markdown.indexOf("## English X prompt")).toBeLessThan(markdown.indexOf("## 中文 X prompt"));
     expect(markdown).toContain("not final publishable copy");
   });
 });

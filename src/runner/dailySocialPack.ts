@@ -4,7 +4,7 @@ import type { CorePack, FeishuWriteResult, SocialPack } from "../domain/types.js
 import type { FeishuClient } from "../feishu/client.js";
 import { loadConfig } from "../config/loadConfig.js";
 import { createFeishuClient } from "../feishu/client.js";
-import { buildSocialPack, renderSocialPackMarkdown } from "../package-builder/socialPack.js";
+import { buildSocialPack, renderSocialPackMarkdown, renderXPromptMarkdown } from "../package-builder/socialPack.js";
 import { appendLog } from "../state/logger.js";
 import { getRunPaths } from "../state/paths.js";
 import { readCorePack, writeJsonFile, writeTextFile } from "../state/runStore.js";
@@ -119,10 +119,7 @@ export async function runDailySocialPack(params: RunDailySocialPackParams = {}):
         appSecret: config.env.FEISHU_APP_SECRET
       });
     const xiaohongshuResult = await feishu.appendMarkdown(config.mia.xiaohongshuDocToken, pack.xiaohongshuPrompt);
-    const xResult = await feishu.appendMarkdown(
-      config.mia.xDocToken,
-      [pack.englishXPrompt, "", pack.chineseXPrompt].join("\n")
-    );
+    const xResult = await feishu.appendMarkdown(config.mia.xDocToken, renderXPromptMarkdown(pack));
     const dmResult = await feishu.sendText(
       config.mia.feishuOpenId,
       formatDmText({
