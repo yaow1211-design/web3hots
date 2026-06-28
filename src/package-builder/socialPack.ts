@@ -1,5 +1,5 @@
 import type { CorePack, MiaConfig, SocialPack } from "../domain/types.js";
-import { bullet } from "./markdown.js";
+import { bullet, sourceLinks } from "./markdown.js";
 
 export interface BuildSocialPackParams {
   runId: string;
@@ -11,6 +11,7 @@ export interface BuildSocialPackParams {
 
 export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
   const selectedTopics = [...params.corePack.selectedEvents].sort((a, b) => b.contentPotentialScore - a.contentPotentialScore).slice(0, 2);
+  const topicLines = selectedTopics.map((topic) => `${topic.title}: ${topic.summary}`).join("\n");
   const factBoundaries = selectedTopics.map((topic) => `Only claim what sources support for "${topic.title}".`);
 
   return {
@@ -20,16 +21,19 @@ export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
     selectedTopics,
     xiaohongshuPrompt: [
       "Write a 小红书 draft that reframes the selected topic for a Chinese-speaking audience.",
+      topicLines,
       "Keep it practical, concise, and grounded in the facts from the core package.",
       "Do not produce final publishable copy."
     ].join("\n"),
     chineseXPrompt: [
       "Write a 中文 X thread draft based on the selected topic.",
+      topicLines,
       "Keep it factual, readable, and suitable for a social-first summary.",
       "Do not produce final publishable copy."
     ].join("\n"),
     englishXPrompt: [
       "Write an English X thread draft based on the selected topic.",
+      topicLines,
       "Keep it factual, readable, and suitable for a social-first summary.",
       "Do not produce final publishable copy."
     ].join("\n"),
@@ -41,14 +45,24 @@ export function buildSocialPack(params: BuildSocialPackParams): SocialPack {
 }
 
 export function renderSocialPackMarkdown(pack: SocialPack): string {
+  const topicSection = pack.selectedTopics
+    .map((topic, index) =>
+      [
+        `## Topic ${index + 1}: ${topic.title}`,
+        "",
+        `Summary: ${topic.summary}`,
+        `Sources: ${sourceLinks(topic.sources)}`
+      ].join("\n")
+    )
+    .join("\n\n");
+
   return [
     `# Social Package | ${pack.date}`,
     "",
     `Run ID: ${pack.runId}`,
     `Source core run ID: ${pack.sourceCoreRunId}`,
     "",
-    "## Selected topics",
-    bullet(pack.selectedTopics.map((topic) => topic.title)),
+    topicSection,
     "",
     "## XiaoHongShu prompt",
     "```text",
